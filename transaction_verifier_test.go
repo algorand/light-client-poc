@@ -106,7 +106,8 @@ func TestTransactionVerify(t *testing.T) {
 		t.Fail()
 	}
 
-	if !verifyTransaction(commitment[:], txId[:], resp) {
+	verified, err := verifyTransaction(commitment[:], txId[:], resp)
+	if !verified || err != nil {
 		t.Fail()
 	}
 }

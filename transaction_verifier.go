@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"crypto"
 	"fmt"
-	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
 	"hash"
+
+	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
 )
 
-type Direction int
+type Position int
 
 const (
-	left Direction = iota
+	left Position = iota
 	right
 )
 
@@ -31,49 +32,51 @@ func unmarshalHashFunc(hashStr string) (hash.Hash, error) {
 	}
 }
 
-func getPreimage(txId []byte, stib []byte) []byte {
-	buf := make([]byte, 64)
+func getHashedLeaf(txId []byte, stib []byte, hashFunc hash.Hash) []byte {
+	buf := make([]byte, 2*hashFunc.Size())
 	copy(buf[:], txId[:])
-	copy(buf[32:], stib[:])
-	return append([]byte{'T', 'L'}, buf...)
+	// TODO: Unsure about the size usage here
+	copy(buf[hashFunc.Size():], stib[:])
+	leaf := append([]byte{'T', 'L'}, buf...)
+	return hashBytes(hashFunc, leaf)
 }
 
-func verifyTransaction(commitment, txId []byte, transactionProof models.ProofResponse) bool {
-	nodeSize := uint64(32)
-
-	hashFunc, err := unmarshalHashFunc(transactionProof.Hashtype)
-	if err != nil {
-		return false
+func getVectorCommitmentPositions(index uint64, depth uint64) []Position {
+	directions := make([]Position, depth)
+	for i := len(directions) - 1; i >= 0; i-- {
+		directions[i] = Position(index & 1)
+		index >>= 1
 	}
 
-	preImage := getPreimage(txId, transactionProof.Stibhash)
-	currentNodeHash := hashBytes(hashFunc, preImage)
+	return directions
+}
 
-	//idxDirection := bits.Reverse64(transactionProof.Idx)
-	directions := getPathDirections(transactionProof.Idx, transactionProof.Treedepth)
+func verifyTransaction(transactionCommitment, txId []byte, transactionProof models.ProofResponse) (bool, error) {
+	hashFunc, err := unmarshalHashFunc(transactionProof.Hashtype)
+	if err != nil {
+		return false, err
+	}
+
+	nodeSize := uint64(hashFunc.Size())
+	currentNodeHash := getHashedLeaf(txId, transactionProof.Stibhash, hashFunc)
+
+	positions := getVectorCommitmentPositions(transactionProof.Idx, transactionProof.Treedepth)
 	for i := uint64(0); i < transactionProof.Treedepth; i++ {
-		currentNodeIdx := i * nodeSize
-		siblingHash := transactionProof.Proof[currentNodeIdx : currentNodeIdx+nodeSize]
+		siblingIndex := i * nodeSize
+		siblingHash := transactionProof.Proof[siblingIndex : siblingIndex+nodeSize]
 
 		nextNode := []byte{'M', 'A'}
-		if directions[i] == left {
+		switch positions[i] {
+		case left:
 			nextNode = append(append(nextNode, currentNodeHash...), siblingHash...)
-		} else {
+		case right:
 			nextNode = append(append(nextNode, siblingHash...), currentNodeHash...)
+		default:
+			return false, fmt.Errorf("bad direction")
 		}
 
 		currentNodeHash = hashBytes(hashFunc, nextNode)
 	}
 
-	return bytes.Equal(currentNodeHash, commitment)
-}
-
-func getPathDirections(index uint64, depth uint64) []Direction {
-	directions := make([]Direction, depth)
-	for i, _ := range directions {
-		directions[i] = Direction(index & 1)
-		index = index >> 1
-	}
-
-	return directions
+	return bytes.Equal(currentNodeHash, transactionCommitment), nil
 }
