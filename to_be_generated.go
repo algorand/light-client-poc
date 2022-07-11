@@ -1,6 +1,6 @@
 package main
 
-type LightBlockHeaderProof struct {
+type LightBlockHeaderProofResponse struct {
 
 	// The index of the light block header in the vector commitment tree
 	Index uint64 `json:"index"`

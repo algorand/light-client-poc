@@ -3,11 +3,16 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
+	"github.com/stretchr/testify/require"
 )
+
+func getTransactionId() ([]byte, error) {
+	transactionIdEncoded := "DQA86GJmEfXKpOCFtbW31EYoFqSjRR8/t63RGCajkHA="
+	return base64.StdEncoding.DecodeString(transactionIdEncoded)
+}
 
 func getTransactionProofResponse() (models.ProofResponse, error) {
 	proofJsonStr := `{
@@ -24,31 +29,22 @@ func getTransactionProofResponse() (models.ProofResponse, error) {
 	return resp, err
 }
 
-func getBlockIntervalCommitment() ([]byte, error) {
-	commitmentStr := "0QgCvCujCapNmpxTiVv5meq3WLfA3R8G857/nF0iyF0="
-	return base64.StdEncoding.DecodeString(commitmentStr)
-}
-
-func getTransactionId() ([]byte, error) {
-	transactionIdEncoded := "DQA86GJmEfXKpOCFtbW31EYoFqSjRR8/t63RGCajkHA="
-	return base64.StdEncoding.DecodeString(transactionIdEncoded)
-}
-
-func getLightBlockHeaderProof() (LightBlockHeaderProof, error) {
+func getLightBlockHeaderProofResponse() (LightBlockHeaderProofResponse, error) {
 	proofJsonStr := `{
 "index": 0,
 "proof": "oNr1sknaf3Hb9rohvNMVRt+LVg71Q3bQa+Fn7u9IRDoQEwCtQSIdOKhrmmubtJq5l7PFaH452Og/xPKqCKySCje8rezV8J56Znxge8MTaF66c6NYOKbgrDq7OvCUiYjX",
 "treedepth": 3
 }`
 	jsonBytes := []byte(proofJsonStr)
-	resp := LightBlockHeaderProof{}
+	resp := LightBlockHeaderProofResponse{}
 
 	err := json.Unmarshal(jsonBytes, &resp)
 	return resp, err
 }
 
-func getRound() uint64 {
-	return 9
+func getBlockIntervalCommitment() ([]byte, error) {
+	commitmentStr := "0QgCvCujCapNmpxTiVv5meq3WLfA3R8G857/nF0iyF0="
+	return base64.StdEncoding.DecodeString(commitmentStr)
 }
 
 func getGenesisHash() ([]byte, error) {
@@ -56,18 +52,22 @@ func getGenesisHash() ([]byte, error) {
 	return base64.StdEncoding.DecodeString(genesisHashEncoded)
 }
 
+func getRound() uint64 {
+	return 9
+}
+
 func TestTransactionVerify(t *testing.T) {
 	r := require.New(t)
-	blockIntervalCommitment, err := getBlockIntervalCommitment()
-	r.NoError(err)
-
 	transactionId, err := getTransactionId()
 	r.NoError(err)
 
 	transactionProof, err := getTransactionProofResponse()
 	r.NoError(err)
 
-	lightBlockHeaderProof, err := getLightBlockHeaderProof()
+	lightBlockHeaderProof, err := getLightBlockHeaderProofResponse()
+	r.NoError(err)
+
+	blockIntervalCommitment, err := getBlockIntervalCommitment()
 	r.NoError(err)
 
 	genesisHash, err := getGenesisHash()
