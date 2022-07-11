@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"crypto"
 	"fmt"
-	"hash"
-
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
+	"github.com/algorand/go-algorand-sdk/types"
+	"hash"
 )
 
 type Position int
@@ -32,13 +32,24 @@ func unmarshalHashFunc(hashStr string) (hash.Hash, error) {
 	}
 }
 
-func getHashedLeaf(txId []byte, stib []byte, hashFunc hash.Hash) []byte {
+func getHashedTransactionLeaf(txId []byte, stib []byte, hashFunc hash.Hash) []byte {
 	buf := make([]byte, 2*hashFunc.Size())
 	copy(buf[:], txId[:])
 	// TODO: Unsure about the size usage here
 	copy(buf[hashFunc.Size():], stib[:])
 	leaf := append([]byte{'T', 'L'}, buf...)
 	return hashBytes(hashFunc, leaf)
+}
+
+func getLightBlockHeaderLeaf(genesisHash []byte, roundNumber uint64, transactionCommitment []byte, hashFunc hash.Hash) []byte {
+	lightBlockheader := types.LightBlockHeader{
+		RoundNumber:         roundNumber,
+		GenesisHash:         genesisHash,
+		Sha256TxnCommitment: transactionCommitment,
+	}
+
+	lightBlockheader.ToBeHashed()
+	return hashBytes(hashFunc, lightBlockheader.ToBeHashed())
 }
 
 func getVectorCommitmentPositions(index uint64, depth uint64) []Position {
@@ -51,19 +62,16 @@ func getVectorCommitmentPositions(index uint64, depth uint64) []Position {
 	return directions
 }
 
-func verifyTransaction(transactionCommitment, txId []byte, transactionProof models.ProofResponse) (bool, error) {
-	hashFunc, err := unmarshalHashFunc(transactionProof.Hashtype)
-	if err != nil {
-		return false, err
-	}
+func climbProof(leaf []byte, leafIndex uint64, proof []byte, treeDepth uint64, hashFunc hash.Hash) ([]byte, error) {
 
 	nodeSize := uint64(hashFunc.Size())
-	currentNodeHash := getHashedLeaf(txId, transactionProof.Stibhash, hashFunc)
+	//currentNodeHash := getHashedTransactionLeaf(txId, transactionProof.Stibhash, hashFunc)
+	currentNodeHash := leaf
 
-	positions := getVectorCommitmentPositions(transactionProof.Idx, transactionProof.Treedepth)
-	for i := uint64(0); i < transactionProof.Treedepth; i++ {
+	positions := getVectorCommitmentPositions(leafIndex, treeDepth)
+	for i := uint64(0); i < treeDepth; i++ {
 		siblingIndex := i * nodeSize
-		siblingHash := transactionProof.Proof[siblingIndex : siblingIndex+nodeSize]
+		siblingHash := proof[siblingIndex : siblingIndex+nodeSize]
 
 		nextNode := []byte{'M', 'A'}
 		switch positions[i] {
@@ -72,11 +80,40 @@ func verifyTransaction(transactionCommitment, txId []byte, transactionProof mode
 		case right:
 			nextNode = append(append(nextNode, siblingHash...), currentNodeHash...)
 		default:
-			return false, fmt.Errorf("bad direction")
+			return []byte{}, fmt.Errorf("bad direction")
 		}
 
 		currentNodeHash = hashBytes(hashFunc, nextNode)
 	}
 
-	return bytes.Equal(currentNodeHash, transactionCommitment), nil
+	return currentNodeHash, nil
+}
+
+func getTransactionProofRoot(transactionId []byte, transactionProof models.ProofResponse) ([]byte, error) {
+	hashFunc, err := unmarshalHashFunc(transactionProof.Hashtype)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	hashedLeaf := getHashedTransactionLeaf(transactionId, transactionProof.Stibhash, hashFunc)
+	return climbProof(hashedLeaf, transactionProof.Idx, transactionProof.Proof, transactionProof.Treedepth, hashFunc)
+}
+
+func VerifyTransaction(transactionId []byte, transactionProof models.ProofResponse,
+	lightBlockHeaderProof LightBlockHeaderProof, blockIntervalCommitment []byte, genesisHash []byte, roundNumber uint64) (bool, error) {
+	transactionProofRoot, err := getTransactionProofRoot(transactionId, transactionProof)
+	if err != nil {
+		return false, err
+	}
+
+	sha256HashFunc := crypto.SHA256.New()
+	lightBlockHeaderLeaf := getLightBlockHeaderLeaf(genesisHash, roundNumber, transactionProofRoot, sha256HashFunc)
+	lightBlockHeaderProofRoot, err := climbProof(lightBlockHeaderLeaf, lightBlockHeaderProof.Index, lightBlockHeaderProof.Proof,
+		lightBlockHeaderProof.Treedepth, sha256HashFunc)
+
+	if err != nil {
+		return false, err
+	}
+
+	return bytes.Equal(lightBlockHeaderProofRoot, blockIntervalCommitment), nil
 }

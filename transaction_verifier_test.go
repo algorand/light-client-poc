@@ -1,113 +1,84 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
 )
 
-func TestTransactionVerify(t *testing.T) {
-	json_str := `{
+func getTransactionProofResponse() (models.ProofResponse, error) {
+	proofJsonStr := `{
 "hashtype": "sha256",
-"idx": 5,
-"proof": "aiX/NAh7vN4w/jUeBNK2IIL2CbeSZ+rh+/J5fIp4SiabNrChkdR2DDP4QiS5FL5LXkkZ0H3vpODwDIDl0YZ33pgv8bjmkF3WWxl8T+ra2ab9zteBHT8MGWd8qheCPmtC",
-"stibhash": "uxH+j9TV9MtgnKCQ4RGBZBscKjFry/bOOYF1VBdtBAg=",
-"treedepth": 3
+"idx": 0,
+"proof": "5xvqtS3zHjSUWiBUK8YupN8AXvl733os1Xln8RfEZBA=",
+"stibhash": "f8mCwgwSThJwH37N5hBj6CjdO/ZhH8XXby2/Bke1lN0=",
+"treedepth": 1
 }`
-	jsonBytes := []byte(json_str)
+	jsonBytes := []byte(proofJsonStr)
 	resp := models.ProofResponse{}
 
 	err := json.Unmarshal(jsonBytes, &resp)
-	if err != nil {
-		t.Fail()
-	}
+	return resp, err
+}
 
-	commitmentStr := `[
-7,
-144,
-104,
-105,
-180,
-90,
-77,
-153,
-137,
-213,
-221,
-218,
-90,
-2,
-125,
-155,
-146,
-170,
-101,
-250,
-198,
-172,
-96,
-152,
-95,
-195,
-64,
-204,
-147,
-102,
-23,
-88
-]`
-	commitmentStrBytes := []byte(commitmentStr)
-	commitment := [32]byte{}
-	err = json.Unmarshal(commitmentStrBytes, &commitment)
-	if err != nil {
-		t.Fail()
-	}
+func getBlockIntervalCommitment() ([]byte, error) {
+	commitmentStr := "0QgCvCujCapNmpxTiVv5meq3WLfA3R8G857/nF0iyF0="
+	return base64.StdEncoding.DecodeString(commitmentStr)
+}
 
-	idStr := `[
-110,
-107,
-58,
-8,
-150,
-136,
-48,
-225,
-11,
-24,
-220,
-98,
-72,
-132,
-148,
-229,
-241,
-232,
-191,
-202,
-218,
-11,
-143,
-79,
-207,
-146,
-178,
-122,
-142,
-162,
-37,
-183
-]`
+func getTransactionId() ([]byte, error) {
+	transactionIdEncoded := "DQA86GJmEfXKpOCFtbW31EYoFqSjRR8/t63RGCajkHA="
+	return base64.StdEncoding.DecodeString(transactionIdEncoded)
+}
 
-	txIdBytes := []byte(idStr)
-	txId := [32]byte{}
-	err = json.Unmarshal(txIdBytes, &txId)
-	if err != nil {
-		t.Fail()
-	}
+func getLightBlockHeaderProof() (LightBlockHeaderProof, error) {
+	proofJsonStr := `{
+"index": 0,
+"proof": "oNr1sknaf3Hb9rohvNMVRt+LVg71Q3bQa+Fn7u9IRDoQEwCtQSIdOKhrmmubtJq5l7PFaH452Og/xPKqCKySCje8rezV8J56Znxge8MTaF66c6NYOKbgrDq7OvCUiYjX",
+"treedepth": 3
+}`
+	jsonBytes := []byte(proofJsonStr)
+	resp := LightBlockHeaderProof{}
 
-	verified, err := verifyTransaction(commitment[:], txId[:], resp)
-	if !verified || err != nil {
+	err := json.Unmarshal(jsonBytes, &resp)
+	return resp, err
+}
+
+func getRound() uint64 {
+	return 9
+}
+
+func getGenesisHash() ([]byte, error) {
+	genesisHashEncoded := "SvwlI5kslp0rKzWBFTxeIdp6nxxxZa97LJx03F39bEQ="
+	return base64.StdEncoding.DecodeString(genesisHashEncoded)
+}
+
+func TestTransactionVerify(t *testing.T) {
+	r := require.New(t)
+	blockIntervalCommitment, err := getBlockIntervalCommitment()
+	r.NoError(err)
+
+	transactionId, err := getTransactionId()
+	r.NoError(err)
+
+	transactionProof, err := getTransactionProofResponse()
+	r.NoError(err)
+
+	lightBlockHeaderProof, err := getLightBlockHeaderProof()
+	r.NoError(err)
+
+	genesisHash, err := getGenesisHash()
+	r.NoError(err)
+
+	round := getRound()
+
+	verified, err := VerifyTransaction(transactionId, transactionProof,
+		lightBlockHeaderProof, blockIntervalCommitment, genesisHash, round)
+	r.NoError(err)
+	if !verified {
 		t.Fail()
 	}
 }
