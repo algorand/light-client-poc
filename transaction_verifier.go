@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"hash"
-	"light-client-poc/encoded_assets"
-	"light-client-poc/utilities"
 
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
 	"github.com/algorand/go-algorand-sdk/stateproofs/datatypes"
+
+	"light-client-poc/encoded_assets"
+	"light-client-poc/utilities"
 )
 
 type Position int
