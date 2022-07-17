@@ -7,7 +7,7 @@ import (
 	"hash"
 
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
-	"github.com/algorand/go-algorand-sdk/types"
+	"github.com/algorand/go-algorand-sdk/stateproofs/datatypes"
 )
 
 type Position int
@@ -43,7 +43,7 @@ func getTransactionLeaf(txId []byte, stib []byte, hashFunc hash.Hash) []byte {
 }
 
 func getLightBlockHeaderLeaf(genesisHash []byte, roundNumber uint64, transactionCommitment []byte, hashFunc hash.Hash) []byte {
-	lightBlockheader := types.LightBlockHeader{
+	lightBlockheader := datatypes.LightBlockHeader{
 		RoundNumber:         roundNumber,
 		GenesisHash:         genesisHash,
 		Sha256TxnCommitment: transactionCommitment,
@@ -66,6 +66,8 @@ func getVectorCommitmentPositions(index uint64, depth uint64) []Position {
 func climbProof(leaf []byte, leafIndex uint64, proof []byte, treeDepth uint64, hashFunc hash.Hash) ([]byte, error) {
 	nodeSize := uint64(hashFunc.Size())
 	currentNodeHash := leaf
+
+	// TODO: Verify proof according to node size
 
 	positions := getVectorCommitmentPositions(leafIndex, treeDepth)
 	for i := uint64(0); i < treeDepth; i++ {
@@ -99,6 +101,8 @@ func VerifyTransaction(transactionId []byte, transactionProofResponse models.Pro
 	transactionProofRoot, err := climbProof(transactionLeaf, transactionProofResponse.Idx,
 		transactionProofResponse.Proof, transactionProofResponse.Treedepth, hashFunc)
 
+	// TODO: Add verification of transactionProofRoot with inputted SHA256TxnRoot? Is it necessary, considering that
+	// TODO: SHA256TxnRoot is not trusted itself?
 	if err != nil {
 		return false, err
 	}

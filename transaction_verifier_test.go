@@ -67,6 +67,7 @@ func TestTransactionVerify(t *testing.T) {
 	lightBlockHeaderProof, err := getLightBlockHeaderProofResponse()
 	r.NoError(err)
 
+	// Will be global
 	blockIntervalCommitment, err := getBlockIntervalCommitment()
 	r.NoError(err)
 
