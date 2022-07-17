@@ -1,4 +1,4 @@
-package main
+package encoded_assets
 
 type LightBlockHeaderProofResponse struct {
 

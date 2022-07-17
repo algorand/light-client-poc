@@ -1,4 +1,4 @@
-package main
+package utilities
 
 import (
 	"crypto"
@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-func decodeFromFile(encodedPath string, target interface{}) error {
+func DecodeFromFile(encodedPath string, target interface{}) error {
 	encodedData, err := os.ReadFile(encodedPath)
 	if err != nil {
 		return err
@@ -18,14 +18,14 @@ func decodeFromFile(encodedPath string, target interface{}) error {
 	return err
 }
 
-func hashBytes(hash hash.Hash, m []byte) []byte {
+func HashBytes(hash hash.Hash, m []byte) []byte {
 	hash.Reset()
 	hash.Write(m)
 	outhash := hash.Sum(nil)
 	return outhash
 }
 
-func unmarshalHashFunc(hashStr string) (hash.Hash, error) {
+func UnmarshalHashFunc(hashStr string) (hash.Hash, error) {
 	switch hashStr {
 	case "sha256":
 		return crypto.SHA256.New(), nil

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"hash"
+	"light-client-poc/encoded_assets"
+	"light-client-poc/utilities"
 
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
 	"github.com/algorand/go-algorand-sdk/stateproofs/datatypes"
@@ -26,7 +28,7 @@ func (t *TransactionVerifier) getTransactionLeaf(txId []byte, stib []byte, hashF
 	// TODO: Unsure about the size usage here
 	copy(buf[hashFunc.Size():], stib[:])
 	leaf := append([]byte{'T', 'L'}, buf...)
-	return hashBytes(hashFunc, leaf)
+	return utilities.HashBytes(hashFunc, leaf)
 }
 
 func (t *TransactionVerifier) getLightBlockHeaderLeaf(roundNumber uint64, transactionCommitment []byte, hashFunc hash.Hash) []byte {
@@ -37,7 +39,7 @@ func (t *TransactionVerifier) getLightBlockHeaderLeaf(roundNumber uint64, transa
 	}
 
 	lightBlockheader.ToBeHashed()
-	return hashBytes(hashFunc, lightBlockheader.ToBeHashed())
+	return utilities.HashBytes(hashFunc, lightBlockheader.ToBeHashed())
 }
 
 func (t *TransactionVerifier) getVectorCommitmentPositions(index uint64, depth uint64) []Position {
@@ -71,15 +73,16 @@ func (t *TransactionVerifier) climbProof(leaf []byte, leafIndex uint64, proof []
 			return []byte{}, fmt.Errorf("bad direction")
 		}
 
-		currentNodeHash = hashBytes(hashFunc, nextNode)
+		currentNodeHash = utilities.HashBytes(hashFunc, nextNode)
 	}
 
 	return currentNodeHash, nil
 }
 
+// TODO: Change to ptr
 func (t *TransactionVerifier) VerifyTransaction(transactionId []byte, transactionProofResponse models.ProofResponse,
-	lightBlockHeaderProofResponse LightBlockHeaderProofResponse, blockIntervalCommitment []byte, roundNumber uint64) (bool, error) {
-	hashFunc, err := unmarshalHashFunc(transactionProofResponse.Hashtype)
+	lightBlockHeaderProofResponse encoded_assets.LightBlockHeaderProofResponse, blockIntervalCommitment []byte, roundNumber uint64) (bool, error) {
+	hashFunc, err := utilities.UnmarshalHashFunc(transactionProofResponse.Hashtype)
 	if err != nil {
 		return false, err
 	}
