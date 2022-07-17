@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto"
 	"fmt"
 	"hash"
 
@@ -17,23 +16,11 @@ const (
 	right
 )
 
-func hashBytes(hash hash.Hash, m []byte) []byte {
-	hash.Reset()
-	hash.Write(m)
-	outhash := hash.Sum(nil)
-	return outhash
+type TransactionVerifier struct {
+	genesisHash datatypes.GenericDigest
 }
 
-func unmarshalHashFunc(hashStr string) (hash.Hash, error) {
-	switch hashStr {
-	case "sha256":
-		return crypto.SHA256.New(), nil
-	default:
-		return nil, fmt.Errorf("unsupported hash function detected")
-	}
-}
-
-func getTransactionLeaf(txId []byte, stib []byte, hashFunc hash.Hash) []byte {
+func (t *TransactionVerifier) getTransactionLeaf(txId []byte, stib []byte, hashFunc hash.Hash) []byte {
 	buf := make([]byte, 2*hashFunc.Size())
 	copy(buf[:], txId[:])
 	// TODO: Unsure about the size usage here
@@ -42,10 +29,10 @@ func getTransactionLeaf(txId []byte, stib []byte, hashFunc hash.Hash) []byte {
 	return hashBytes(hashFunc, leaf)
 }
 
-func getLightBlockHeaderLeaf(genesisHash []byte, roundNumber uint64, transactionCommitment []byte, hashFunc hash.Hash) []byte {
+func (t *TransactionVerifier) getLightBlockHeaderLeaf(roundNumber uint64, transactionCommitment []byte, hashFunc hash.Hash) []byte {
 	lightBlockheader := datatypes.LightBlockHeader{
 		RoundNumber:         roundNumber,
-		GenesisHash:         genesisHash,
+		GenesisHash:         t.genesisHash,
 		Sha256TxnCommitment: transactionCommitment,
 	}
 
@@ -53,7 +40,7 @@ func getLightBlockHeaderLeaf(genesisHash []byte, roundNumber uint64, transaction
 	return hashBytes(hashFunc, lightBlockheader.ToBeHashed())
 }
 
-func getVectorCommitmentPositions(index uint64, depth uint64) []Position {
+func (t *TransactionVerifier) getVectorCommitmentPositions(index uint64, depth uint64) []Position {
 	directions := make([]Position, depth)
 	for i := len(directions) - 1; i >= 0; i-- {
 		directions[i] = Position(index & 1)
@@ -63,13 +50,13 @@ func getVectorCommitmentPositions(index uint64, depth uint64) []Position {
 	return directions
 }
 
-func climbProof(leaf []byte, leafIndex uint64, proof []byte, treeDepth uint64, hashFunc hash.Hash) ([]byte, error) {
+func (t *TransactionVerifier) climbProof(leaf []byte, leafIndex uint64, proof []byte, treeDepth uint64, hashFunc hash.Hash) ([]byte, error) {
 	nodeSize := uint64(hashFunc.Size())
 	currentNodeHash := leaf
 
 	// TODO: Verify proof according to node size
 
-	positions := getVectorCommitmentPositions(leafIndex, treeDepth)
+	positions := t.getVectorCommitmentPositions(leafIndex, treeDepth)
 	for i := uint64(0); i < treeDepth; i++ {
 		siblingIndex := i * nodeSize
 		siblingHash := proof[siblingIndex : siblingIndex+nodeSize]
@@ -90,15 +77,15 @@ func climbProof(leaf []byte, leafIndex uint64, proof []byte, treeDepth uint64, h
 	return currentNodeHash, nil
 }
 
-func VerifyTransaction(transactionId []byte, transactionProofResponse models.ProofResponse,
-	lightBlockHeaderProofResponse LightBlockHeaderProofResponse, blockIntervalCommitment []byte, genesisHash []byte, roundNumber uint64) (bool, error) {
+func (t *TransactionVerifier) VerifyTransaction(transactionId []byte, transactionProofResponse models.ProofResponse,
+	lightBlockHeaderProofResponse LightBlockHeaderProofResponse, blockIntervalCommitment []byte, roundNumber uint64) (bool, error) {
 	hashFunc, err := unmarshalHashFunc(transactionProofResponse.Hashtype)
 	if err != nil {
 		return false, err
 	}
 
-	transactionLeaf := getTransactionLeaf(transactionId, transactionProofResponse.Stibhash, hashFunc)
-	transactionProofRoot, err := climbProof(transactionLeaf, transactionProofResponse.Idx,
+	transactionLeaf := t.getTransactionLeaf(transactionId, transactionProofResponse.Stibhash, hashFunc)
+	transactionProofRoot, err := t.climbProof(transactionLeaf, transactionProofResponse.Idx,
 		transactionProofResponse.Proof, transactionProofResponse.Treedepth, hashFunc)
 
 	// TODO: Add verification of transactionProofRoot with inputted SHA256TxnRoot? Is it necessary, considering that
@@ -107,8 +94,8 @@ func VerifyTransaction(transactionId []byte, transactionProofResponse models.Pro
 		return false, err
 	}
 
-	lightBlockHeaderLeaf := getLightBlockHeaderLeaf(genesisHash, roundNumber, transactionProofRoot, hashFunc)
-	lightBlockHeaderProofRoot, err := climbProof(lightBlockHeaderLeaf, lightBlockHeaderProofResponse.Index, lightBlockHeaderProofResponse.Proof,
+	lightBlockHeaderLeaf := t.getLightBlockHeaderLeaf(roundNumber, transactionProofRoot, hashFunc)
+	lightBlockHeaderProofRoot, err := t.climbProof(lightBlockHeaderLeaf, lightBlockHeaderProofResponse.Index, lightBlockHeaderProofResponse.Proof,
 		lightBlockHeaderProofResponse.Treedepth, hashFunc)
 
 	if err != nil {

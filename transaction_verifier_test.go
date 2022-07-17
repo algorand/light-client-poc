@@ -16,6 +16,8 @@ func TestTransactionVerify(t *testing.T) {
 	err := decodeFromFile(transactionVerificationFolder+"genesis_hash.json", &genesisHash)
 	r.NoError(err)
 
+	transactionVerifier := TransactionVerifier{genesisHash: genesisHash}
+
 	var round uint64
 	err = decodeFromFile(transactionVerificationFolder+"round.json", &round)
 	r.NoError(err)
@@ -37,8 +39,8 @@ func TestTransactionVerify(t *testing.T) {
 	err = decodeFromFile(transactionVerificationFolder+"light_block_header_commitment.json", &lightBlockHeaderCommitment)
 	r.NoError(err)
 
-	verified, err := VerifyTransaction(transactionId, transactionProofResponse,
-		lightBlockHeaderProofResponse, lightBlockHeaderCommitment, genesisHash, round)
+	verified, err := transactionVerifier.VerifyTransaction(transactionId, transactionProofResponse,
+		lightBlockHeaderProofResponse, lightBlockHeaderCommitment, round)
 	r.NoError(err)
 	if !verified {
 		t.Fail()
