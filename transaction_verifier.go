@@ -8,8 +8,6 @@ import (
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
 	"github.com/algorand/go-algorand-sdk/stateproofs/datatypes"
 	"github.com/algorand/go-algorand-sdk/types"
-
-	"light-client-poc/utilities"
 )
 
 type Position int
@@ -74,7 +72,7 @@ func (t *TransactionVerifier) computeMerkleRoot(leaf datatypes.GenericDigest, le
 			return []byte{}, fmt.Errorf("bad direction")
 		}
 
-		currentNodeHash = utilities.HashBytes(hashFunc, nextNode)
+		currentNodeHash = datatypes.HashBytes(hashFunc, nextNode)
 	}
 
 	return currentNodeHash, nil
