@@ -54,8 +54,8 @@ github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuy
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
-github.com/algonathan/go-algorand v0.21.0-fork-test h1:Zh1ZMPt94KxknYQgNXmco8NlvHJtksBHdpBhV1cmewA=
-github.com/algonathan/go-algorand v0.21.0-fork-test/go.mod h1:lCXXms2Ybrj50X0mg64IJcDOXqVysf7fU3yX3NSUi3o=
+github.com/algonathan/go-algorand v0.22.0-crypto-split h1:/JSEFl47GwDsVSm/3UBnJRek9xCsgMz0KjUoDKB6nEI=
+github.com/algonathan/go-algorand v0.22.0-crypto-split/go.mod h1:lCXXms2Ybrj50X0mg64IJcDOXqVysf7fU3yX3NSUi3o=
 github.com/algorand/falcon v0.0.0-20220419072721-9f9785b53dd1 h1:QTV/yE/cwjvEkmqIi8OIUZf+ACbTjJ/NzwzLyCUuS3w=
 github.com/algorand/falcon v0.0.0-20220419072721-9f9785b53dd1/go.mod h1:OkQyHlGvS0kLNcIWbC21/uQcnbfwSOQm+wiqWwBG9pQ=
 github.com/algorand/go-codec v1.1.8 h1:XDSreeeZY8gMst6Edz4RBkl08/DGMJOeHYkoXL2B7wI=

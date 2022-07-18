@@ -3,7 +3,7 @@ module light-client-poc
 go 1.17
 
 require (
-	github.com/algorand/go-algorand v0.21.0-fork-test
+	github.com/algorand/go-algorand v0.22.0-crypto-split
 	github.com/algorand/go-algorand-sdk v1.17.0
 	github.com/stretchr/testify v1.8.0
 )
@@ -32,6 +32,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/algorand/go-algorand-sdk v1.17.0 => /Users/almog/go/src/github.com/almog-t/go-algorand-sdk
+replace github.com/algorand/go-algorand-sdk v1.17.0 => /Users/almog/go/src/github.com/almog-t/go-algorand-sdk-current-poc
 
-replace github.com/algorand/go-algorand v0.21.0-fork-test => github.com/algonathan/go-algorand v0.21.0-fork-test
+replace github.com/algorand/go-algorand v0.22.0-crypto-split => github.com/algonathan/go-algorand v0.22.0-crypto-split

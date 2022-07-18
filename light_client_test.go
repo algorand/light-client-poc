@@ -15,8 +15,9 @@ func getAdvancedLightClient(r *require.Assertions) *LightClient {
 	r.NoError(err)
 
 	intervalSize := stateProofMessage.LastAttestedRound - stateProofMessage.FirstAttestedRound + 1
-	tracker := InitializeLightClient(intervalSize, stateProofMessage.FirstAttestedRound, *genesisHash, *genesisVotersCommitment, genesisVotersLnProvenWeight)
-	tracker.AdvanceState(stateProof, stateProofMessage)
+	tracker := InitializeLightClient(intervalSize, stateProofMessage.FirstAttestedRound, genesisHash, genesisVotersCommitment, genesisVotersLnProvenWeight)
+	err = tracker.AdvanceState(stateProof, stateProofMessage)
+	r.NoError(err)
 	return tracker
 }
 
@@ -34,7 +35,6 @@ func TestLightClient_VerifyTransaction(t *testing.T) {
 	round, transactionId, transactionProofResponse, lightBlockHeaderProofResponse, _, err := encoded_assets.GetParsedTransactionVerificationData()
 	r.NoError(err)
 
-	verified, err := lightClient.VerifyTransaction(*transactionId, round, *transactionProofResponse, *lightBlockHeaderProofResponse)
+	err = lightClient.VerifyTransaction(transactionId, transactionProofResponse, lightBlockHeaderProofResponse, round)
 	r.NoError(err)
-	r.True(verified)
 }

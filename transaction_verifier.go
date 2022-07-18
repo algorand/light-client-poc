@@ -7,8 +7,8 @@ import (
 
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
 	"github.com/algorand/go-algorand-sdk/stateproofs/datatypes"
+	"github.com/algorand/go-algorand-sdk/types"
 
-	"light-client-poc/encoded_assets"
 	"light-client-poc/utilities"
 )
 
@@ -20,19 +20,18 @@ const (
 )
 
 type TransactionVerifier struct {
-	genesisHash datatypes.GenericDigest
+	genesisHash types.Digest
 }
 
-func (t *TransactionVerifier) getTransactionLeaf(txId []byte, stib []byte, hashFunc hash.Hash) []byte {
-	buf := make([]byte, 2*hashFunc.Size())
+func (t *TransactionVerifier) getTransactionLeaf(txId types.Digest, stib types.Digest, hashFunc hash.Hash) datatypes.GenericDigest {
+	buf := make([]byte, 2*types.DigestSize)
 	copy(buf[:], txId[:])
-	// TODO: Unsure about the size usage here
-	copy(buf[hashFunc.Size():], stib[:])
-	leaf := append([]byte{'T', 'L'}, buf...)
-	return utilities.HashBytes(hashFunc, leaf)
+	copy(buf[types.DigestSize:], stib[:])
+	leaf := append([]byte(datatypes.TxnMerkleLeaf), buf...)
+	return datatypes.HashBytes(hashFunc, leaf)
 }
 
-func (t *TransactionVerifier) getLightBlockHeaderLeaf(roundNumber uint64, transactionCommitment []byte, hashFunc hash.Hash) []byte {
+func (t *TransactionVerifier) getLightBlockHeaderLeaf(roundNumber types.Round, transactionCommitment datatypes.GenericDigest, hashFunc hash.Hash) datatypes.GenericDigest {
 	lightBlockheader := datatypes.LightBlockHeader{
 		RoundNumber:         roundNumber,
 		GenesisHash:         t.genesisHash,
@@ -40,7 +39,7 @@ func (t *TransactionVerifier) getLightBlockHeaderLeaf(roundNumber uint64, transa
 	}
 
 	lightBlockheader.ToBeHashed()
-	return utilities.HashBytes(hashFunc, lightBlockheader.ToBeHashed())
+	return datatypes.HashBytes(hashFunc, lightBlockheader.ToBeHashed())
 }
 
 func (t *TransactionVerifier) getVectorCommitmentPositions(index uint64, depth uint64) []Position {
@@ -53,7 +52,7 @@ func (t *TransactionVerifier) getVectorCommitmentPositions(index uint64, depth u
 	return directions
 }
 
-func (t *TransactionVerifier) climbProof(leaf []byte, leafIndex uint64, proof []byte, treeDepth uint64, hashFunc hash.Hash) ([]byte, error) {
+func (t *TransactionVerifier) computeMerkleRoot(leaf datatypes.GenericDigest, leafIndex uint64, proof []byte, treeDepth uint64, hashFunc hash.Hash) (datatypes.GenericDigest, error) {
 	nodeSize := uint64(hashFunc.Size())
 	currentNodeHash := leaf
 
@@ -64,13 +63,14 @@ func (t *TransactionVerifier) climbProof(leaf []byte, leafIndex uint64, proof []
 		siblingIndex := i * nodeSize
 		siblingHash := proof[siblingIndex : siblingIndex+nodeSize]
 
-		nextNode := []byte{'M', 'A'}
+		nextNode := []byte(datatypes.MerkleArrayNode)
 		switch positions[i] {
 		case left:
 			nextNode = append(append(nextNode, currentNodeHash...), siblingHash...)
 		case right:
 			nextNode = append(append(nextNode, siblingHash...), currentNodeHash...)
 		default:
+			// TODO: Create error type
 			return []byte{}, fmt.Errorf("bad direction")
 		}
 
@@ -80,31 +80,36 @@ func (t *TransactionVerifier) climbProof(leaf []byte, leafIndex uint64, proof []
 	return currentNodeHash, nil
 }
 
-// TODO: Change to ptr
-func (t *TransactionVerifier) VerifyTransaction(transactionId []byte, transactionProofResponse models.ProofResponse,
-	lightBlockHeaderProofResponse encoded_assets.LightBlockHeaderProofResponse, blockIntervalCommitment []byte, roundNumber uint64) (bool, error) {
-	hashFunc, err := utilities.UnmarshalHashFunc(transactionProofResponse.Hashtype)
+func (t *TransactionVerifier) VerifyTransaction(transactionId types.Digest, transactionProofResponse models.ProofResponse,
+	lightBlockHeaderProofResponse models.LightBlockHeaderProof, blockIntervalCommitment types.Digest, roundNumber types.Round) error {
+	hashFunc, err := datatypes.UnmarshalHashFunc(transactionProofResponse.Hashtype)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	transactionLeaf := t.getTransactionLeaf(transactionId, transactionProofResponse.Stibhash, hashFunc)
-	transactionProofRoot, err := t.climbProof(transactionLeaf, transactionProofResponse.Idx,
+	var stibHashDigest types.Digest
+	copy(stibHashDigest[:], transactionProofResponse.Stibhash[:])
+	transactionLeaf := t.getTransactionLeaf(transactionId, stibHashDigest, hashFunc)
+	transactionProofRoot, err := t.computeMerkleRoot(transactionLeaf, transactionProofResponse.Idx,
 		transactionProofResponse.Proof, transactionProofResponse.Treedepth, hashFunc)
 
 	// TODO: Add verification of transactionProofRoot with inputted SHA256TxnRoot? Is it necessary, considering that
 	// TODO: SHA256TxnRoot is not trusted itself?
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	lightBlockHeaderLeaf := t.getLightBlockHeaderLeaf(roundNumber, transactionProofRoot, hashFunc)
-	lightBlockHeaderProofRoot, err := t.climbProof(lightBlockHeaderLeaf, lightBlockHeaderProofResponse.Index, lightBlockHeaderProofResponse.Proof,
+	lightBlockHeaderProofRoot, err := t.computeMerkleRoot(lightBlockHeaderLeaf, lightBlockHeaderProofResponse.Index, lightBlockHeaderProofResponse.Proof,
 		lightBlockHeaderProofResponse.Treedepth, hashFunc)
 
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return bytes.Equal(lightBlockHeaderProofRoot, blockIntervalCommitment), nil
+	// TODO: Add error type
+	if bytes.Equal(lightBlockHeaderProofRoot, blockIntervalCommitment[:]) != true {
+		return fmt.Errorf("calculated root and trusted commitment are different")
+	}
+	return nil
 }
