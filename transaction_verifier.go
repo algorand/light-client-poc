@@ -75,7 +75,7 @@ func (t *TransactionVerifier) computeMerkleRoot(leaf datatypes.GenericDigest, le
 	if treeDepth*nodeSize != uint64(len(proof)) {
 		return datatypes.GenericDigest{}, ErrProofLengthTreeDepthMismatch
 	}
-	
+
 	positions, err := t.getVectorCommitmentPositions(leafIndex, treeDepth)
 	if err != nil {
 		return datatypes.GenericDigest{}, err
