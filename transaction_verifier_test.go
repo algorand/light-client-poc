@@ -14,11 +14,11 @@ func TestTransactionVerifier_VerifyTransaction(t *testing.T) {
 	genesisHash, err := encoded_assets.GetGenesisHash()
 	r.NoError(err)
 
-	round, transactionId, transactionProofResponse, lightBlockHeaderProofResponse, lightBlockHeaderCommitment, err := encoded_assets.GetParsedTransactionVerificationData()
+	round, seed, transactionId, transactionProofResponse, lightBlockHeaderProofResponse, lightBlockHeaderCommitment, err := encoded_assets.GetParsedTransactionVerificationData()
 	r.NoError(err)
 
 	transactionVerifier := TransactionVerifier{genesisHash: genesisHash}
 	err = transactionVerifier.VerifyTransaction(transactionId, transactionProofResponse,
-		lightBlockHeaderProofResponse, lightBlockHeaderCommitment, round)
+		lightBlockHeaderProofResponse, lightBlockHeaderCommitment, round, seed)
 	r.NoError(err)
 }

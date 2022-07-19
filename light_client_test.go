@@ -32,9 +32,9 @@ func TestLightClient_VerifyTransaction(t *testing.T) {
 
 	lightClient := getAdvancedLightClient(r)
 
-	round, transactionId, transactionProofResponse, lightBlockHeaderProofResponse, _, err := encoded_assets.GetParsedTransactionVerificationData()
+	round, seed, transactionId, transactionProofResponse, lightBlockHeaderProofResponse, _, err := encoded_assets.GetParsedTransactionVerificationData()
 	r.NoError(err)
 
-	err = lightClient.VerifyTransaction(transactionId, transactionProofResponse, lightBlockHeaderProofResponse, round)
+	err = lightClient.VerifyTransaction(transactionId, transactionProofResponse, lightBlockHeaderProofResponse, round, seed)
 	r.NoError(err)
 }

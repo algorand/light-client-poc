@@ -37,11 +37,13 @@ func (t *TransactionVerifier) getTransactionLeaf(txId types.Digest, stib types.D
 	return datatypes.HashBytes(hashFunc, leaf)
 }
 
-func (t *TransactionVerifier) getLightBlockHeaderLeaf(roundNumber types.Round, transactionCommitment datatypes.GenericDigest, hashFunc hash.Hash) datatypes.GenericDigest {
+func (t *TransactionVerifier) getLightBlockHeaderLeaf(roundNumber types.Round,
+	transactionCommitment datatypes.GenericDigest, seed datatypes.Seed, hashFunc hash.Hash) datatypes.GenericDigest {
 	lightBlockheader := datatypes.LightBlockHeader{
 		RoundNumber:         roundNumber,
 		GenesisHash:         t.genesisHash,
 		Sha256TxnCommitment: transactionCommitment,
+		Seed:                seed,
 	}
 
 	lightBlockheader.ToBeHashed()
@@ -103,7 +105,7 @@ func (t *TransactionVerifier) computeMerkleRoot(leaf datatypes.GenericDigest, le
 }
 
 func (t *TransactionVerifier) VerifyTransaction(transactionId types.Digest, transactionProofResponse models.ProofResponse,
-	lightBlockHeaderProofResponse models.LightBlockHeaderProof, blockIntervalCommitment types.Digest, roundNumber types.Round) error {
+	lightBlockHeaderProofResponse models.LightBlockHeaderProof, blockIntervalCommitment types.Digest, roundNumber types.Round, seed datatypes.Seed) error {
 	hashFunc, err := datatypes.UnmarshalHashFunc(transactionProofResponse.Hashtype)
 	if err != nil {
 		return err
@@ -121,7 +123,7 @@ func (t *TransactionVerifier) VerifyTransaction(transactionId types.Digest, tran
 		return err
 	}
 
-	lightBlockHeaderLeaf := t.getLightBlockHeaderLeaf(roundNumber, transactionProofRoot, hashFunc)
+	lightBlockHeaderLeaf := t.getLightBlockHeaderLeaf(roundNumber, transactionProofRoot, seed, hashFunc)
 	lightBlockHeaderProofRoot, err := t.computeMerkleRoot(lightBlockHeaderLeaf, lightBlockHeaderProofResponse.Index, lightBlockHeaderProofResponse.Proof,
 		lightBlockHeaderProofResponse.Treedepth, hashFunc)
 

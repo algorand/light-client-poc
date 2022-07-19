@@ -60,12 +60,13 @@ func (l *LightClient) AdvanceState(stateProof *datatypes.EncodedStateProof, mess
 }
 
 func (l *LightClient) VerifyTransaction(transactionId types.Digest, transactionProofResponse models.ProofResponse,
-	lightBlockHeaderProofResponse models.LightBlockHeaderProof, round types.Round) error {
+	lightBlockHeaderProofResponse models.LightBlockHeaderProof, round types.Round, seed datatypes.Seed) error {
 	matchingCommitment, ok := l.intervalCommitmentHistory[l.roundToInterval(round)]
 
 	if !ok {
 		return ErrNoStateProofForRound
 	}
 
-	return l.transactionVerifier.VerifyTransaction(transactionId, transactionProofResponse, lightBlockHeaderProofResponse, matchingCommitment, round)
+	return l.transactionVerifier.VerifyTransaction(transactionId, transactionProofResponse,
+		lightBlockHeaderProofResponse, matchingCommitment, round, seed)
 }
