@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"hash"
 
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
@@ -10,11 +10,19 @@ import (
 	"github.com/algorand/go-algorand-sdk/types"
 )
 
+var (
+	ErrProofLengthTreeDepthMismatch = errors.New("proof length and tree depth do not match")
+	ErrRootMismatch                 = errors.New("root mismatch")
+	ErrInvalidTreeDepth             = errors.New("invalid tree depth")
+	ErrIndexDepthMismatch           = errors.New("node index is not smaller than 2^depth")
+	ErrInvalidPosition              = errors.New("invalid position for node")
+)
+
 type Position int
 
 const (
-	left Position = iota
-	right
+	right Position = iota
+	left
 )
 
 type TransactionVerifier struct {
@@ -40,36 +48,52 @@ func (t *TransactionVerifier) getLightBlockHeaderLeaf(roundNumber types.Round, t
 	return datatypes.HashBytes(hashFunc, lightBlockheader.ToBeHashed())
 }
 
-func (t *TransactionVerifier) getVectorCommitmentPositions(index uint64, depth uint64) []Position {
+func (t *TransactionVerifier) getVectorCommitmentPositions(index uint64, depth uint64) ([]Position, error) {
+	if depth == 0 {
+		return []Position{}, ErrInvalidTreeDepth
+	}
+
+	if index >= 1<<depth {
+		return []Position{}, ErrIndexDepthMismatch
+	}
+
 	directions := make([]Position, depth)
 	for i := len(directions) - 1; i >= 0; i-- {
 		directions[i] = Position(index & 1)
 		index >>= 1
 	}
 
-	return directions
+	return directions, nil
 }
 
 func (t *TransactionVerifier) computeMerkleRoot(leaf datatypes.GenericDigest, leafIndex uint64, proof []byte, treeDepth uint64, hashFunc hash.Hash) (datatypes.GenericDigest, error) {
+	if len(proof) == 0 && treeDepth == 0 {
+		return leaf, nil
+	}
+
+	positions, err := t.getVectorCommitmentPositions(leafIndex, treeDepth)
+	if err != nil {
+		return datatypes.GenericDigest{}, err
+	}
+
 	nodeSize := uint64(hashFunc.Size())
+	if treeDepth*nodeSize != uint64(len(proof)) {
+		return datatypes.GenericDigest{}, ErrProofLengthTreeDepthMismatch
+	}
+
 	currentNodeHash := leaf
-
-	// TODO: Verify proof according to node size
-
-	positions := t.getVectorCommitmentPositions(leafIndex, treeDepth)
 	for i := uint64(0); i < treeDepth; i++ {
 		siblingIndex := i * nodeSize
 		siblingHash := proof[siblingIndex : siblingIndex+nodeSize]
 
 		nextNode := []byte(datatypes.MerkleArrayNode)
 		switch positions[i] {
-		case left:
-			nextNode = append(append(nextNode, currentNodeHash...), siblingHash...)
 		case right:
+			nextNode = append(append(nextNode, currentNodeHash...), siblingHash...)
+		case left:
 			nextNode = append(append(nextNode, siblingHash...), currentNodeHash...)
 		default:
-			// TODO: Create error type
-			return []byte{}, fmt.Errorf("bad direction")
+			return []byte{}, ErrInvalidPosition
 		}
 
 		currentNodeHash = datatypes.HashBytes(hashFunc, nextNode)
@@ -105,9 +129,8 @@ func (t *TransactionVerifier) VerifyTransaction(transactionId types.Digest, tran
 		return err
 	}
 
-	// TODO: Add error type
 	if bytes.Equal(lightBlockHeaderProofRoot, blockIntervalCommitment[:]) != true {
-		return fmt.Errorf("calculated root and trusted commitment are different")
+		return ErrRootMismatch
 	}
 	return nil
 }
