@@ -3,13 +3,13 @@ module light-client-poc
 go 1.17
 
 require (
-	github.com/algorand/go-algorand v0.22.0-crypto-split
 	github.com/algorand/go-algorand-sdk v1.17.0
 	github.com/stretchr/testify v1.8.0
 )
 
 require (
 	github.com/algorand/falcon v0.0.0-20220419072721-9f9785b53dd1 // indirect
+	github.com/algorand/go-algorand v0.22.0-crypto-split // indirect
 	github.com/algorand/go-codec/codec v1.1.8 // indirect
 	github.com/algorand/go-deadlock v0.2.2 // indirect
 	github.com/algorand/go-sumhash v0.1.0 // indirect
@@ -32,6 +32,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/algorand/go-algorand-sdk v1.17.0 => github.com/almog-t/go-algorand-sdk v1.14.1-0.20220718153213-799392d58b86
+replace github.com/algorand/go-algorand-sdk v1.17.0 => github.com/almog-t/go-algorand-sdk v1.14.1-0.20220719114649-c60364b69400
 
 replace github.com/algorand/go-algorand v0.22.0-crypto-split => github.com/algonathan/go-algorand v0.22.0-crypto-split

@@ -5,39 +5,29 @@ import (
 	"github.com/algorand/go-algorand-sdk/stateproofs/datatypes"
 	"github.com/algorand/go-algorand-sdk/stateproofs/functions"
 	"github.com/algorand/go-algorand-sdk/types"
-	"github.com/algorand/go-algorand/crypto/stateproof"
 )
-
-const strengthTarget = uint64(256)
-
-// TODO: Add capacity perhaps
 
 type LightClient struct {
 	intervalSize       uint64
 	firstAttestedRound uint64
 
-	genesisHash types.Digest
-
 	nextInterval              uint64
 	intervalCommitmentHistory map[uint64]types.Digest
 
+	stateProofVerifier  *functions.StateProofVerifier
 	transactionVerifier *TransactionVerifier
-	// TODO: handle import
-	stateProofVerifier *stateproof.Verifier
 }
 
 func InitializeLightClient(intervalSize uint64, firstAttestedRound uint64, genesisHash types.Digest, genesisVotersCommitment datatypes.GenericDigest, genesisLnProvenWeight uint64) *LightClient {
 	transactionVerifier := TransactionVerifier{genesisHash: genesisHash}
-	stateProofVerifier := functions.MkVerifierWithLnProvenWeight(genesisVotersCommitment, genesisLnProvenWeight, strengthTarget)
+	stateProofVerifier := functions.InitializeVerifier(genesisVotersCommitment, genesisLnProvenWeight)
 
 	return &LightClient{
 		intervalSize:       intervalSize,
 		firstAttestedRound: firstAttestedRound,
 
-		genesisHash: genesisHash,
-
-		intervalCommitmentHistory: make(map[uint64]types.Digest, 0),
 		nextInterval:              0,
+		intervalCommitmentHistory: make(map[uint64]types.Digest, 0),
 
 		transactionVerifier: &transactionVerifier,
 		stateProofVerifier:  stateProofVerifier,
@@ -51,9 +41,7 @@ func (t *LightClient) roundToInterval(round types.Round) uint64 {
 }
 
 func (t *LightClient) AdvanceState(stateProof *datatypes.EncodedStateProof, message datatypes.Message) error {
-	messageHash := message.IntoStateProofMessageHash()
-
-	err := functions.Verify(t.stateProofVerifier, types.Round(message.LastAttestedRound), messageHash, stateProof)
+	err := t.stateProofVerifier.AdvanceState(stateProof, message)
 	if err != nil {
 		return err
 	}
@@ -63,7 +51,6 @@ func (t *LightClient) AdvanceState(stateProof *datatypes.EncodedStateProof, mess
 	t.intervalCommitmentHistory[t.nextInterval] = commitmentDigest
 	t.nextInterval++
 
-	t.stateProofVerifier = functions.MkVerifierWithLnProvenWeight(message.VotersCommitment, message.LnProvenWeight, strengthTarget)
 	return nil
 }
 
