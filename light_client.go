@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
-	"github.com/algorand/go-algorand-sdk/stateproofs/datatypes"
-	"github.com/algorand/go-algorand-sdk/stateproofs/functions"
+	"github.com/algorand/go-algorand-sdk/stateproofs/stateprooftypes"
+	"github.com/algorand/go-algorand-sdk/stateproofs/stateproofverification"
 	"github.com/algorand/go-algorand-sdk/types"
 )
 
@@ -20,13 +20,13 @@ type LightClient struct {
 	nextInterval              uint64
 	intervalCommitmentHistory map[uint64]types.Digest
 
-	stateProofVerifier  *functions.StateProofVerifier
+	stateProofVerifier  *stateproofverification.StateProofVerifier
 	transactionVerifier *TransactionVerifier
 }
 
-func InitializeLightClient(intervalSize uint64, firstAttestedRound uint64, genesisHash types.Digest, genesisVotersCommitment datatypes.GenericDigest, genesisLnProvenWeight uint64) *LightClient {
+func InitializeLightClient(intervalSize uint64, firstAttestedRound uint64, genesisHash types.Digest, genesisVotersCommitment stateprooftypes.GenericDigest, genesisLnProvenWeight uint64) *LightClient {
 	transactionVerifier := TransactionVerifier{genesisHash: genesisHash}
-	stateProofVerifier := functions.InitializeVerifier(genesisVotersCommitment, genesisLnProvenWeight)
+	stateProofVerifier := stateproofverification.InitializeVerifier(genesisVotersCommitment, genesisLnProvenWeight)
 
 	return &LightClient{
 		intervalSize:       intervalSize,
@@ -45,7 +45,7 @@ func (l *LightClient) roundToInterval(round types.Round) uint64 {
 	return (nearestIntervalMultiple - (l.firstAttestedRound - 1)) / l.intervalSize
 }
 
-func (l *LightClient) AdvanceState(stateProof *datatypes.EncodedStateProof, message datatypes.Message) error {
+func (l *LightClient) AdvanceState(stateProof *stateprooftypes.EncodedStateProof, message stateprooftypes.Message) error {
 	err := l.stateProofVerifier.AdvanceState(stateProof, message)
 	if err != nil {
 		return err
@@ -60,7 +60,7 @@ func (l *LightClient) AdvanceState(stateProof *datatypes.EncodedStateProof, mess
 }
 
 func (l *LightClient) VerifyTransaction(transactionId types.Digest, transactionProofResponse models.ProofResponse,
-	lightBlockHeaderProofResponse models.LightBlockHeaderProof, round types.Round, seed datatypes.Seed) error {
+	lightBlockHeaderProofResponse models.LightBlockHeaderProof, round types.Round, seed stateprooftypes.Seed) error {
 	matchingCommitment, ok := l.intervalCommitmentHistory[l.roundToInterval(round)]
 
 	if !ok {
