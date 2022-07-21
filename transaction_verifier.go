@@ -21,8 +21,8 @@ var (
 type Position int
 
 const (
-	right Position = iota
-	left
+	left Position = iota
+	right
 )
 
 type TransactionVerifier struct {
@@ -50,6 +50,8 @@ func (t *TransactionVerifier) getLightBlockHeaderLeaf(roundNumber types.Round,
 	return stateprooftypes.HashBytes(hashFunc, lightBlockheader.ToBeHashed())
 }
 
+// TODO: Explain what this function does
+// TODO: Explain what we do with the depth
 func (t *TransactionVerifier) getVectorCommitmentPositions(index uint64, depth uint64) ([]Position, error) {
 	if depth == 0 {
 		return []Position{}, ErrInvalidTreeDepth
@@ -84,15 +86,16 @@ func (t *TransactionVerifier) computeMerkleRoot(leaf stateprooftypes.GenericDige
 	}
 
 	currentNodeHash := leaf
-	for i := uint64(0); i < treeDepth; i++ {
-		siblingIndex := i * nodeSize
+	for currentLevel := uint64(0); currentLevel < treeDepth; currentLevel++ {
+		siblingIndex := currentLevel * nodeSize
+		// TODO: What is the proof? An array of hashes
 		siblingHash := proof[siblingIndex : siblingIndex+nodeSize]
 
 		nextNode := []byte(stateprooftypes.MerkleArrayNode)
-		switch positions[i] {
-		case right:
-			nextNode = append(append(nextNode, currentNodeHash...), siblingHash...)
+		switch positions[currentLevel] {
 		case left:
+			nextNode = append(append(nextNode, currentNodeHash...), siblingHash...)
+		case right:
 			nextNode = append(append(nextNode, siblingHash...), currentNodeHash...)
 		default:
 			return []byte{}, ErrInvalidPosition
@@ -104,8 +107,7 @@ func (t *TransactionVerifier) computeMerkleRoot(leaf stateprooftypes.GenericDige
 	return currentNodeHash, nil
 }
 
-func (t *TransactionVerifier) VerifyTransaction(transactionId types.Digest, transactionProofResponse models.ProofResponse,
-	lightBlockHeaderProofResponse models.LightBlockHeaderProof, blockIntervalCommitment types.Digest, roundNumber types.Round, seed stateprooftypes.Seed) error {
+func (t *TransactionVerifier) VerifyTransaction(transactionId types.Digest, transactionProofResponse models.ProofResponse, lightBlockHeaderProofResponse models.LightBlockHeaderProof, confirmedRound types.Round, seed stateprooftypes.Seed, blockIntervalCommitment types.Digest) error {
 	hashFunc, err := stateprooftypes.UnmarshalHashFunc(transactionProofResponse.Hashtype)
 	if err != nil {
 		return err
@@ -121,7 +123,7 @@ func (t *TransactionVerifier) VerifyTransaction(transactionId types.Digest, tran
 		return err
 	}
 
-	lightBlockHeaderLeaf := t.getLightBlockHeaderLeaf(roundNumber, transactionProofRoot, seed, hashFunc)
+	lightBlockHeaderLeaf := t.getLightBlockHeaderLeaf(confirmedRound, transactionProofRoot, seed, hashFunc)
 	lightBlockHeaderProofRoot, err := t.computeMerkleRoot(lightBlockHeaderLeaf, lightBlockHeaderProofResponse.Index, lightBlockHeaderProofResponse.Proof,
 		lightBlockHeaderProofResponse.Treedepth, hashFunc)
 

@@ -18,7 +18,6 @@ func TestTransactionVerifier_VerifyTransaction(t *testing.T) {
 	r.NoError(err)
 
 	transactionVerifier := TransactionVerifier{genesisHash: genesisHash}
-	err = transactionVerifier.VerifyTransaction(transactionId, transactionProofResponse,
-		lightBlockHeaderProofResponse, lightBlockHeaderCommitment, round, seed)
+	err = transactionVerifier.VerifyTransaction(transactionId, transactionProofResponse, lightBlockHeaderProofResponse, round, seed, lightBlockHeaderCommitment)
 	r.NoError(err)
 }
