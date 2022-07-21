@@ -21,7 +21,8 @@ type Oracle struct {
 	stateProofVerifier *stateproofverification.StateProofVerifier
 }
 
-// TODO: What is the parameter, where does it come from?
+// InitializeOracle initializes the Oracle using trusted genesis data - the voters commitment and the Ln of the proven weight.
+// These parameters can be retrieved using the SDK API.
 func InitializeOracle(intervalSize uint64, firstAttestedRound uint64, genesisVotersCommitment stateprooftypes.GenericDigest, genesisLnProvenWeight uint64) *Oracle {
 	stateProofVerifier := stateproofverification.InitializeVerifier(genesisVotersCommitment, genesisLnProvenWeight)
 
@@ -40,7 +41,9 @@ func (o *Oracle) roundToInterval(round types.Round) uint64 {
 	return (nearestIntervalMultiple - (o.firstAttestedRound - 1)) / o.intervalSize
 }
 
-// TODO: What is the parameter, where does it come from?
+// AdvanceState receives a message packed state proof, provided by the SDK API, and a state proof message that the
+// state proof attests to. It verifies the message using the proof and the verifier from the previous round,
+// and, if successful, creates a new verifier using the message and saves the block header commitment to the history.
 func (o *Oracle) AdvanceState(stateProof *stateprooftypes.EncodedStateProof, message stateprooftypes.Message) error {
 	err := o.stateProofVerifier.AdvanceState(stateProof, message)
 	if err != nil {
