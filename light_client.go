@@ -17,13 +17,13 @@ type LightClient struct {
 	intervalSize       uint64
 	firstAttestedRound uint64
 
-	nextInterval              uint64
-	intervalCommitmentHistory map[uint64]types.Digest
+	intervalCommitmentHistory []types.Digest
 
 	stateProofVerifier  *stateproofverification.StateProofVerifier
 	transactionVerifier *TransactionVerifier
 }
 
+// TODO: What is the parameter, where does it come from?
 func InitializeLightClient(intervalSize uint64, firstAttestedRound uint64, genesisHash types.Digest, genesisVotersCommitment stateprooftypes.GenericDigest, genesisLnProvenWeight uint64) *LightClient {
 	transactionVerifier := TransactionVerifier{genesisHash: genesisHash}
 	stateProofVerifier := stateproofverification.InitializeVerifier(genesisVotersCommitment, genesisLnProvenWeight)
@@ -32,8 +32,7 @@ func InitializeLightClient(intervalSize uint64, firstAttestedRound uint64, genes
 		intervalSize:       intervalSize,
 		firstAttestedRound: firstAttestedRound,
 
-		nextInterval:              0,
-		intervalCommitmentHistory: make(map[uint64]types.Digest, 0),
+		intervalCommitmentHistory: make([]types.Digest, 0),
 
 		transactionVerifier: &transactionVerifier,
 		stateProofVerifier:  stateProofVerifier,
@@ -45,6 +44,7 @@ func (l *LightClient) roundToInterval(round types.Round) uint64 {
 	return (nearestIntervalMultiple - (l.firstAttestedRound - 1)) / l.intervalSize
 }
 
+// TODO: What is the parameter, where does it come from?
 func (l *LightClient) AdvanceState(stateProof *stateprooftypes.EncodedStateProof, message stateprooftypes.Message) error {
 	err := l.stateProofVerifier.AdvanceState(stateProof, message)
 	if err != nil {
@@ -52,21 +52,21 @@ func (l *LightClient) AdvanceState(stateProof *stateprooftypes.EncodedStateProof
 	}
 
 	var commitmentDigest types.Digest
-	copy(commitmentDigest[:], message.BlockHeadersCommitment[:])
-	l.intervalCommitmentHistory[l.nextInterval] = commitmentDigest
-	l.nextInterval++
+	copy(commitmentDigest[:], message.BlockHeadersCommitment)
+	l.intervalCommitmentHistory = append(l.intervalCommitmentHistory, commitmentDigest)
 
 	return nil
 }
 
+// TODO: What is the parameter, where does it come from?
 func (l *LightClient) VerifyTransaction(transactionId types.Digest, transactionProofResponse models.ProofResponse,
 	lightBlockHeaderProofResponse models.LightBlockHeaderProof, round types.Round, seed stateprooftypes.Seed) error {
-	matchingCommitment, ok := l.intervalCommitmentHistory[l.roundToInterval(round)]
-
-	if !ok {
+	transactionCommitmentInterval := l.roundToInterval(round)
+	if transactionCommitmentInterval >= uint64(len(l.intervalCommitmentHistory)) {
 		return ErrNoStateProofForRound
 	}
 
-	return l.transactionVerifier.VerifyTransaction(transactionId, transactionProofResponse,
-		lightBlockHeaderProofResponse, matchingCommitment, round, seed)
+	matchingCommitment := l.intervalCommitmentHistory[l.roundToInterval(round)]
+
+	return l.transactionVerifier.VerifyTransaction(transactionId, transactionProofResponse, lightBlockHeaderProofResponse, round, seed, matchingCommitment)
 }
