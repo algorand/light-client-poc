@@ -22,7 +22,7 @@ type Oracle struct {
 }
 
 // InitializeOracle initializes the Oracle using trusted genesis data - the voters commitment and the Ln of the proven weight.
-// These parameters can be retrieved using the SDK API.
+// These parameters can be found in the developer portal.
 func InitializeOracle(intervalSize uint64, firstAttestedRound uint64, genesisVotersCommitment stateprooftypes.GenericDigest, genesisLnProvenWeight uint64) *Oracle {
 	stateProofVerifier := stateproofverification.InitializeVerifier(genesisVotersCommitment, genesisLnProvenWeight)
 
