@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"errors"
-	"hash"
-
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
 	"github.com/algorand/go-algorand-sdk/stateproofs/stateprooftypes"
 	"github.com/algorand/go-algorand-sdk/types"
@@ -40,7 +38,7 @@ func (t *TransactionVerifier) computeTransactionLeaf(txId types.Digest, stib typ
 }
 
 func (t *TransactionVerifier) computeLightBlockHeaderLeaf(roundNumber types.Round,
-	transactionCommitment types.Digest, seed stateprooftypes.Seed, hashFunc hash.Hash) types.Digest {
+	transactionCommitment types.Digest, seed stateprooftypes.Seed) types.Digest {
 	lightBlockheader := stateprooftypes.LightBlockHeader{
 		RoundNumber:         roundNumber,
 		GenesisHash:         t.genesisHash,
@@ -135,9 +133,8 @@ func (t *TransactionVerifier) VerifyTransaction(transactionId types.Digest, tran
 		return err
 	}
 
-	lightBlockHeaderHashFunc := sha256.New()
 	// We build the candidate light block header using the computed transactionProofRoot, hash and verify it.
-	candidateLightBlockHeaderLeaf := t.computeLightBlockHeaderLeaf(confirmedRound, transactionProofRoot, seed, lightBlockHeaderHashFunc)
+	candidateLightBlockHeaderLeaf := t.computeLightBlockHeaderLeaf(confirmedRound, transactionProofRoot, seed)
 	lightBlockHeaderProofRoot, err := computeVectorCommitmentMerkleRoot(candidateLightBlockHeaderLeaf, lightBlockHeaderProofResponse.Index, lightBlockHeaderProofResponse.Proof,
 		lightBlockHeaderProofResponse.Treedepth)
 
