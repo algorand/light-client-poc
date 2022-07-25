@@ -31,16 +31,16 @@ type TransactionVerifier struct {
 	genesisHash types.Digest
 }
 
-func (t *TransactionVerifier) computeTransactionLeaf(txId types.Digest, stib types.Digest, hashFunc hash.Hash) stateprooftypes.GenericDigest {
+func (t *TransactionVerifier) computeTransactionLeaf(txId types.Digest, stib types.Digest) types.Digest {
 	buf := make([]byte, 2*types.DigestSize)
 	copy(buf[:], txId[:])
 	copy(buf[types.DigestSize:], stib[:])
 	leaf := append([]byte(stateprooftypes.TxnMerkleLeaf), buf...)
-	return stateprooftypes.HashBytes(hashFunc, leaf)
+	return sha256.Sum256(leaf)
 }
 
 func (t *TransactionVerifier) computeLightBlockHeaderLeaf(roundNumber types.Round,
-	transactionCommitment stateprooftypes.GenericDigest, seed stateprooftypes.Seed, hashFunc hash.Hash) stateprooftypes.GenericDigest {
+	transactionCommitment types.Digest, seed stateprooftypes.Seed, hashFunc hash.Hash) types.Digest {
 	lightBlockheader := stateprooftypes.LightBlockHeader{
 		RoundNumber:         roundNumber,
 		GenesisHash:         t.genesisHash,
@@ -48,8 +48,7 @@ func (t *TransactionVerifier) computeLightBlockHeaderLeaf(roundNumber types.Roun
 		Seed:                seed,
 	}
 
-	lightBlockheader.ToBeHashed()
-	return stateprooftypes.HashBytes(hashFunc, lightBlockheader.ToBeHashed())
+	return sha256.Sum256(lightBlockheader.ToBeHashed())
 }
 
 // getVectorCommitmentPositions takes the index provided with the proof, which is a bitmap of positions,
@@ -75,19 +74,19 @@ func getVectorCommitmentPositions(index uint64, depth uint64) ([]Position, error
 	return directions, nil
 }
 
-func computeVectorCommitmentMerkleRoot(leaf stateprooftypes.GenericDigest, leafIndex uint64, proof []byte, treeDepth uint64, hashFunc hash.Hash) (stateprooftypes.GenericDigest, error) {
+func computeVectorCommitmentMerkleRoot(leaf types.Digest, leafIndex uint64, proof []byte, treeDepth uint64) (types.Digest, error) {
 	if len(proof) == 0 && treeDepth == 0 {
 		return leaf, nil
 	}
 
-	nodeSize := uint64(hashFunc.Size())
+	nodeSize := uint64(sha256.New().Size())
 	if treeDepth*nodeSize != uint64(len(proof)) {
-		return stateprooftypes.GenericDigest{}, ErrProofLengthTreeDepthMismatch
+		return types.Digest{}, ErrProofLengthTreeDepthMismatch
 	}
 
 	positions, err := getVectorCommitmentPositions(leafIndex, treeDepth)
 	if err != nil {
-		return stateprooftypes.GenericDigest{}, err
+		return types.Digest{}, err
 	}
 
 	currentNodeHash := leaf
@@ -98,14 +97,14 @@ func computeVectorCommitmentMerkleRoot(leaf stateprooftypes.GenericDigest, leafI
 		nextNode := []byte(stateprooftypes.MerkleArrayNode)
 		switch positions[currentLevel] {
 		case left:
-			nextNode = append(append(nextNode, currentNodeHash...), siblingHash...)
+			nextNode = append(append(nextNode, currentNodeHash[:]...), siblingHash...)
 		case right:
-			nextNode = append(append(nextNode, siblingHash...), currentNodeHash...)
+			nextNode = append(append(nextNode, siblingHash...), currentNodeHash[:]...)
 		default:
-			return []byte{}, ErrInvalidPosition
+			return types.Digest{}, ErrInvalidPosition
 		}
 
-		currentNodeHash = stateprooftypes.HashBytes(hashFunc, nextNode)
+		currentNodeHash = sha256.Sum256(nextNode)
 	}
 
 	return currentNodeHash, nil
@@ -128,10 +127,9 @@ func (t *TransactionVerifier) VerifyTransaction(transactionId types.Digest, tran
 	var stibHashDigest types.Digest
 	copy(stibHashDigest[:], transactionProofResponse.Stibhash[:])
 
-	transactionHashFunc := sha256.New()
-	transactionLeaf := t.computeTransactionLeaf(transactionId, stibHashDigest, transactionHashFunc)
+	transactionLeaf := t.computeTransactionLeaf(transactionId, stibHashDigest)
 	transactionProofRoot, err := computeVectorCommitmentMerkleRoot(transactionLeaf, transactionProofResponse.Idx,
-		transactionProofResponse.Proof, transactionProofResponse.Treedepth, transactionHashFunc)
+		transactionProofResponse.Proof, transactionProofResponse.Treedepth)
 
 	if err != nil {
 		return err
@@ -141,13 +139,13 @@ func (t *TransactionVerifier) VerifyTransaction(transactionId types.Digest, tran
 	// We build the candidate light block header using the computed transactionProofRoot, hash and verify it.
 	candidateLightBlockHeaderLeaf := t.computeLightBlockHeaderLeaf(confirmedRound, transactionProofRoot, seed, lightBlockHeaderHashFunc)
 	lightBlockHeaderProofRoot, err := computeVectorCommitmentMerkleRoot(candidateLightBlockHeaderLeaf, lightBlockHeaderProofResponse.Index, lightBlockHeaderProofResponse.Proof,
-		lightBlockHeaderProofResponse.Treedepth, lightBlockHeaderHashFunc)
+		lightBlockHeaderProofResponse.Treedepth)
 
 	if err != nil {
 		return err
 	}
 
-	if bytes.Equal(lightBlockHeaderProofRoot, blockIntervalCommitment[:]) != true {
+	if bytes.Equal(lightBlockHeaderProofRoot[:], blockIntervalCommitment[:]) != true {
 		return ErrRootMismatch
 	}
 	return nil
