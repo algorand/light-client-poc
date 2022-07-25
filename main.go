@@ -19,9 +19,7 @@ func main() {
 	}
 
 	intervalSize := stateProofMessage.LastAttestedRound - stateProofMessage.FirstAttestedRound + 1
-	// Actual initialization will not use stateProofMessage.FirstAttestedRound, it's simply convenient here for testing
-	// purposes.
-	oracle := InitializeOracle(intervalSize, stateProofMessage.FirstAttestedRound, genesisVotersCommitment, genesisVotersLnProvenWeight)
+	oracle := InitializeOracle(intervalSize, genesisVotersCommitment, genesisVotersLnProvenWeight, 1000)
 	err = oracle.AdvanceState(stateProof, stateProofMessage)
 	if err != nil {
 		fmt.Printf("Failed to advance oracle state: %s\n", err)

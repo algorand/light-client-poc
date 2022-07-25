@@ -1,46 +1,30 @@
 package main
 
 import (
-	"errors"
+	"light-client-poc/utilities"
 
 	"github.com/algorand/go-algorand-sdk/stateproofs/stateprooftypes"
 	"github.com/algorand/go-algorand-sdk/stateproofs/stateproofverification"
 	"github.com/algorand/go-algorand-sdk/types"
 )
 
-var (
-	ErrNoStateProofForRound = errors.New("round belongs to an interval without a matching state proof")
-)
-
 // Oracle is in charge of maintaining commitments for previous round intervals and allows, given a round, to retrieve
 // the vector commitment attesting to that round.
 type Oracle struct {
-	intervalSize       uint64
-	firstAttestedRound uint64
-
-	intervalCommitmentHistory []types.Digest
-
+	commitmentHistory  *utilities.CommitmentHistory
 	stateProofVerifier *stateproofverification.StateProofVerifier
 }
 
 // InitializeOracle initializes the Oracle using trusted genesis data - the voters commitment and the Ln of the proven weight.
 // These parameters can be found in the developer portal.
-func InitializeOracle(intervalSize uint64, firstAttestedRound uint64, genesisVotersCommitment stateprooftypes.GenericDigest, genesisLnProvenWeight uint64) *Oracle {
+func InitializeOracle(intervalSize uint64, genesisVotersCommitment stateprooftypes.GenericDigest,
+	genesisLnProvenWeight uint64, capacity uint64) *Oracle {
 	stateProofVerifier := stateproofverification.InitializeVerifier(genesisVotersCommitment, genesisLnProvenWeight)
 
 	return &Oracle{
-		intervalSize:       intervalSize,
-		firstAttestedRound: firstAttestedRound,
-
-		intervalCommitmentHistory: make([]types.Digest, 0),
-
+		commitmentHistory:  utilities.InitializeCommitmentHistory(intervalSize, capacity),
 		stateProofVerifier: stateProofVerifier,
 	}
-}
-
-func (o *Oracle) roundToInterval(round types.Round) uint64 {
-	nearestIntervalMultiple := (uint64(round) / o.intervalSize) * o.intervalSize
-	return (nearestIntervalMultiple - (o.firstAttestedRound - 1)) / o.intervalSize
 }
 
 // AdvanceState receives a message packed state proof, provided by the SDK API, and a state proof message that the
@@ -54,16 +38,11 @@ func (o *Oracle) AdvanceState(stateProof *stateprooftypes.EncodedStateProof, mes
 
 	var commitmentDigest types.Digest
 	copy(commitmentDigest[:], message.BlockHeadersCommitment)
-	o.intervalCommitmentHistory = append(o.intervalCommitmentHistory, commitmentDigest)
+	o.commitmentHistory.InsertCommitment(commitmentDigest)
 
 	return nil
 }
 
 func (o *Oracle) GetStateProofCommitment(round types.Round) (types.Digest, error) {
-	transactionCommitmentInterval := o.roundToInterval(round)
-	if transactionCommitmentInterval >= uint64(len(o.intervalCommitmentHistory)) {
-		return types.Digest{}, ErrNoStateProofForRound
-	}
-
-	return o.intervalCommitmentHistory[o.roundToInterval(round)], nil
+	return o.commitmentHistory.GetCommitment(round)
 }
