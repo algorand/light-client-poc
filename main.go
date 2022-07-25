@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	genesis_hash, round, seed, transactionId, transactionProofResponse, lightBlockHeaderProofResponse, _, err := encoded_assets.GetParsedTransactionVerificationData()
+	genesis_hash, round, seed, transactionHash, transactionProofResponse, lightBlockHeaderProofResponse, _, err := encoded_assets.GetParsedTransactionVerificationData()
 	if err != nil {
 		fmt.Printf("Failed to parse assets needed for transaction verification: %s\n", err)
 		return
@@ -35,7 +35,7 @@ func main() {
 	}
 
 	transactionVerifier := TransactionVerifier{genesisHash: genesis_hash}
-	err = transactionVerifier.VerifyTransaction(transactionId, transactionProofResponse,
+	err = transactionVerifier.VerifyTransaction(transactionHash, transactionProofResponse,
 		lightBlockHeaderProofResponse, round, seed, desiredTransactionCommitment)
 
 	if err != nil {
