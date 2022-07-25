@@ -12,6 +12,8 @@ var (
 	ErrNoStateProofForRound = errors.New("round belongs to an interval without a matching state proof")
 )
 
+// Oracle is in charge of maintaining commitments for previous round intervals and allows, given a round, to retrieve
+// the vector commitment attesting to that round.
 type Oracle struct {
 	intervalSize       uint64
 	firstAttestedRound uint64
