@@ -31,7 +31,7 @@ type TransactionVerifier struct {
 	genesisHash types.Digest
 }
 
-func (t *TransactionVerifier) getTransactionLeaf(txId types.Digest, stib types.Digest, hashFunc hash.Hash) stateprooftypes.GenericDigest {
+func (t *TransactionVerifier) computeTransactionLeaf(txId types.Digest, stib types.Digest, hashFunc hash.Hash) stateprooftypes.GenericDigest {
 	buf := make([]byte, 2*types.DigestSize)
 	copy(buf[:], txId[:])
 	copy(buf[types.DigestSize:], stib[:])
@@ -39,7 +39,7 @@ func (t *TransactionVerifier) getTransactionLeaf(txId types.Digest, stib types.D
 	return stateprooftypes.HashBytes(hashFunc, leaf)
 }
 
-func (t *TransactionVerifier) getLightBlockHeaderLeaf(roundNumber types.Round,
+func (t *TransactionVerifier) computeLightBlockHeaderLeaf(roundNumber types.Round,
 	transactionCommitment stateprooftypes.GenericDigest, seed stateprooftypes.Seed, hashFunc hash.Hash) stateprooftypes.GenericDigest {
 	lightBlockheader := stateprooftypes.LightBlockHeader{
 		RoundNumber:         roundNumber,
@@ -129,7 +129,7 @@ func (t *TransactionVerifier) VerifyTransaction(transactionId types.Digest, tran
 	copy(stibHashDigest[:], transactionProofResponse.Stibhash[:])
 
 	transactionHashFunc := sha256.New()
-	transactionLeaf := t.getTransactionLeaf(transactionId, stibHashDigest, transactionHashFunc)
+	transactionLeaf := t.computeTransactionLeaf(transactionId, stibHashDigest, transactionHashFunc)
 	transactionProofRoot, err := computeVectorCommitmentMerkleRoot(transactionLeaf, transactionProofResponse.Idx,
 		transactionProofResponse.Proof, transactionProofResponse.Treedepth, transactionHashFunc)
 
@@ -139,7 +139,7 @@ func (t *TransactionVerifier) VerifyTransaction(transactionId types.Digest, tran
 
 	lightBlockHeaderHashFunc := sha256.New()
 	// We build the candidate light block header using the computed transactionProofRoot, hash and verify it.
-	candidateLightBlockHeaderLeaf := t.getLightBlockHeaderLeaf(confirmedRound, transactionProofRoot, seed, lightBlockHeaderHashFunc)
+	candidateLightBlockHeaderLeaf := t.computeLightBlockHeaderLeaf(confirmedRound, transactionProofRoot, seed, lightBlockHeaderHashFunc)
 	lightBlockHeaderProofRoot, err := computeVectorCommitmentMerkleRoot(candidateLightBlockHeaderLeaf, lightBlockHeaderProofResponse.Index, lightBlockHeaderProofResponse.Proof,
 		lightBlockHeaderProofResponse.Treedepth, lightBlockHeaderHashFunc)
 
