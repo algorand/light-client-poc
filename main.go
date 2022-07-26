@@ -7,15 +7,17 @@ import (
 )
 
 func main() {
+	genesisVotersCommitment, genesisVotersLnProvenWeight, err := encoded_assets.GetParsedGenesisData("encoded_assets/genesis/")
+
 	genesisHash, round, seed, transactionHash, transactionProofResponse, lightBlockHeaderProofResponse, _, err :=
-		encoded_assets.GetParsedTransactionVerificationData("encoded_assets/transaction_verification")
+		encoded_assets.GetParsedTransactionVerificationData("encoded_assets/transaction_verification/")
 	if err != nil {
 		fmt.Printf("Failed to parse assets needed for transaction verification: %s\n", err)
 		return
 	}
 
-	genesisVotersCommitment, genesisVotersLnProvenWeight, stateProofMessage, stateProof, err :=
-		encoded_assets.GetParsedStateProofAdvancmentData("encoded_assets/state_proof_verification")
+	stateProofMessage, stateProof, err :=
+		encoded_assets.GetParsedStateProofAdvancmentData("encoded_assets/state_proof_verification/")
 	if err != nil {
 		fmt.Printf("Failed to parse assets needed for oracle state advancement: %s\n", err)
 		return

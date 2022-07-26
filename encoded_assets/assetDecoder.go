@@ -6,7 +6,7 @@ import (
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
 	"github.com/algorand/go-algorand-sdk/stateproofs/stateprooftypes"
 	"github.com/algorand/go-algorand-sdk/types"
-	
+
 	"github.com/almog-t/light-client-poc/utilities"
 )
 
@@ -58,31 +58,35 @@ func GetParsedTransactionVerificationData(transactionVerificationDataPath string
 		lightBlockHeaderProof, lightBlockHeaderCommitment, nil
 }
 
-func GetParsedStateProofAdvancmentData(stateProofVerificationDataPath string) (stateprooftypes.GenericDigest, uint64, stateprooftypes.Message,
-	*stateprooftypes.EncodedStateProof, error) {
+func GetParsedGenesisData(genesisDataPath string) (stateprooftypes.GenericDigest, uint64, error) {
 	genesisVotersCommitment := stateprooftypes.GenericDigest{}
-	err := utilities.DecodeFromFile(filepath.Join(stateProofVerificationDataPath, "genesis_voters_commitment.json"), &genesisVotersCommitment)
+	err := utilities.DecodeFromFile(filepath.Join(genesisDataPath, "genesis_voters_commitment.json"), &genesisVotersCommitment)
 	if err != nil {
-		return nil, 0, stateprooftypes.Message{}, nil, err
+		return stateprooftypes.GenericDigest{}, 0, err
 	}
 
 	genesisVotersLnProvenWeight := uint64(0)
-	err = utilities.DecodeFromFile(filepath.Join(stateProofVerificationDataPath, "genesis_voters_ln_proven_weight.json"), &genesisVotersLnProvenWeight)
+	err = utilities.DecodeFromFile(filepath.Join(genesisDataPath, "genesis_voters_ln_proven_weight.json"), &genesisVotersLnProvenWeight)
 	if err != nil {
-		return nil, 0, stateprooftypes.Message{}, nil, err
+		return stateprooftypes.GenericDigest{}, 0, err
 	}
 
+	return genesisVotersCommitment, genesisVotersLnProvenWeight, nil
+}
+
+func GetParsedStateProofAdvancmentData(stateProofVerificationDataPath string) (stateprooftypes.Message,
+	*stateprooftypes.EncodedStateProof, error) {
 	stateProofMessage := stateprooftypes.Message{}
-	err = utilities.DecodeFromFile(filepath.Join(stateProofVerificationDataPath, "state_proof_message.json"), &stateProofMessage)
+	err := utilities.DecodeFromFile(filepath.Join(stateProofVerificationDataPath, "state_proof_message.json"), &stateProofMessage)
 	if err != nil {
-		return nil, 0, stateprooftypes.Message{}, nil, err
+		return stateprooftypes.Message{}, nil, err
 	}
 
 	var stateProof stateprooftypes.EncodedStateProof
 	err = utilities.DecodeFromFile(filepath.Join(stateProofVerificationDataPath, "state_proof.json"), &stateProof)
 	if err != nil {
-		return nil, 0, stateprooftypes.Message{}, nil, err
+		return stateprooftypes.Message{}, nil, err
 	}
 
-	return genesisVotersCommitment, genesisVotersLnProvenWeight, stateProofMessage, &stateProof, nil
+	return stateProofMessage, &stateProof, nil
 }
