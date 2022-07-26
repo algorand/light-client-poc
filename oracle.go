@@ -1,11 +1,11 @@
 package main
 
 import (
-	"light-client-poc/utilities"
-
 	"github.com/algorand/go-algorand-sdk/stateproofs/stateprooftypes"
 	"github.com/algorand/go-algorand-sdk/stateproofs/stateproofverification"
 	"github.com/algorand/go-algorand-sdk/types"
+
+	"github.com/almog-t/light-client-poc/utilities"
 )
 
 // Oracle is in charge of maintaining commitments for previous round intervals and allows, given a round, to retrieve

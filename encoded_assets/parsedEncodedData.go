@@ -5,7 +5,7 @@ import (
 	"github.com/algorand/go-algorand-sdk/stateproofs/stateprooftypes"
 	"github.com/algorand/go-algorand-sdk/types"
 
-	"light-client-poc/utilities"
+	"github.com/almog-t/light-client-poc/utilities"
 )
 
 var transactionVerificationFolder = "encoded_assets/transaction_verification/"

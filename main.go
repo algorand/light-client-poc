@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"light-client-poc/encoded_assets"
+	"github.com/almog-t/light-client-poc/encoded_assets"
 )
 
 func main() {
