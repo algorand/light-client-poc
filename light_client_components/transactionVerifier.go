@@ -1,4 +1,4 @@
-package main
+package light_client_components
 
 import (
 	"bytes"
@@ -27,6 +27,10 @@ const (
 
 type TransactionVerifier struct {
 	genesisHash types.Digest
+}
+
+func InitializeTransactionVerifier(genesisHash types.Digest) *TransactionVerifier {
+	return &TransactionVerifier{genesisHash: genesisHash}
 }
 
 func (t *TransactionVerifier) computeTransactionLeaf(txId types.Digest, stib types.Digest) types.Digest {

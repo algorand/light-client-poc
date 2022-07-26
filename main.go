@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/almog-t/light-client-poc/encoded_assets"
+	"github.com/almog-t/light-client-poc/light_client_components"
 )
 
 func main() {
-	genesis_hash, round, seed, transactionHash, transactionProofResponse, lightBlockHeaderProofResponse, _, err := encoded_assets.GetParsedTransactionVerificationData()
+	genesisHash, round, seed, transactionHash, transactionProofResponse, lightBlockHeaderProofResponse, _, err := encoded_assets.GetParsedTransactionVerificationData()
 	if err != nil {
 		fmt.Printf("Failed to parse assets needed for transaction verification: %s\n", err)
 		return
@@ -19,7 +20,7 @@ func main() {
 	}
 
 	intervalSize := stateProofMessage.LastAttestedRound - stateProofMessage.FirstAttestedRound + 1
-	oracle := InitializeOracle(intervalSize, genesisVotersCommitment, genesisVotersLnProvenWeight, 1000)
+	oracle := light_client_components.InitializeOracle(intervalSize, genesisVotersCommitment, genesisVotersLnProvenWeight, 1000)
 	err = oracle.AdvanceState(stateProof, stateProofMessage)
 	if err != nil {
 		fmt.Printf("Failed to advance oracle state: %s\n", err)
@@ -32,7 +33,7 @@ func main() {
 		return
 	}
 
-	transactionVerifier := TransactionVerifier{genesisHash: genesis_hash}
+	transactionVerifier := light_client_components.InitializeTransactionVerifier(genesisHash)
 	err = transactionVerifier.VerifyTransaction(transactionHash, transactionProofResponse,
 		lightBlockHeaderProofResponse, round, seed, desiredTransactionCommitment)
 

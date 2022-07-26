@@ -1,4 +1,4 @@
-package main
+package light_client_components
 
 import (
 	"github.com/algorand/go-algorand-sdk/stateproofs/stateprooftypes"
