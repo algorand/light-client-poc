@@ -30,6 +30,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/algorand/go-algorand-sdk v1.17.0 => github.com/almog-t/go-algorand-sdk v1.14.1-0.20220725120103-78dd4d3f290b
+replace github.com/algorand/go-algorand-sdk v1.17.0 => github.com/almog-t/go-algorand-sdk v1.14.1-0.20220726115802-16e2c7121e88
 
 replace github.com/algorand/go-algorand v0.22.0-crypto-split => github.com/algonathan/go-algorand v0.22.0-crypto-split
