@@ -35,9 +35,8 @@ func main() {
 		return
 	}
 
-	transactionVerifier := light_client_components.InitializeTransactionVerifier(genesisHash)
-	err = transactionVerifier.VerifyTransaction(transactionHash, transactionProofResponse,
-		lightBlockHeaderProofResponse, round, seed, desiredTransactionCommitment)
+	err = light_client_components.VerifyTransaction(transactionHash, transactionProofResponse,
+		lightBlockHeaderProofResponse, round, genesisHash, seed, desiredTransactionCommitment)
 
 	if err != nil {
 		fmt.Printf("Transaction verification failed: %s\n", err)

@@ -25,15 +25,7 @@ const (
 	right
 )
 
-type TransactionVerifier struct {
-	GenesisHash types.Digest
-}
-
-func InitializeTransactionVerifier(genesisHash types.Digest) *TransactionVerifier {
-	return &TransactionVerifier{GenesisHash: genesisHash}
-}
-
-func (t *TransactionVerifier) computeTransactionLeaf(txId types.Digest, stib types.Digest) types.Digest {
+func computeTransactionLeaf(txId types.Digest, stib types.Digest) types.Digest {
 	buf := make([]byte, 2*types.DigestSize)
 	copy(buf[:], txId[:])
 	copy(buf[types.DigestSize:], stib[:])
@@ -41,11 +33,11 @@ func (t *TransactionVerifier) computeTransactionLeaf(txId types.Digest, stib typ
 	return sha256.Sum256(leaf)
 }
 
-func (t *TransactionVerifier) computeLightBlockHeaderLeaf(roundNumber types.Round,
-	transactionCommitment types.Digest, seed stateprooftypes.Seed) types.Digest {
+func computeLightBlockHeaderLeaf(roundNumber types.Round,
+	transactionCommitment types.Digest, genesisHash types.Digest, seed stateprooftypes.Seed) types.Digest {
 	lightBlockheader := stateprooftypes.LightBlockHeader{
 		RoundNumber:         roundNumber,
-		GenesisHash:         t.GenesisHash,
+		GenesisHash:         genesisHash,
 		Sha256TxnCommitment: transactionCommitment,
 		Seed:                seed,
 	}
@@ -119,7 +111,8 @@ func computeVectorCommitmentMerkleRoot(leaf types.Digest, leafIndex uint64, proo
 //	2. Build a candidate light block header using the computed vector commitment.
 // 	3. Compute the candidate light block header's vector commitment using the provided light block header proof.
 // 	4. Verify that the computed candidate vector commitment matches the expected vector commitment.
-func (t *TransactionVerifier) VerifyTransaction(transactionHash types.Digest, transactionProofResponse models.ProofResponse, lightBlockHeaderProofResponse models.LightBlockHeaderProof, confirmedRound types.Round, seed stateprooftypes.Seed, blockIntervalCommitment types.Digest) error {
+func VerifyTransaction(transactionHash types.Digest, transactionProofResponse models.ProofResponse,
+	lightBlockHeaderProofResponse models.LightBlockHeaderProof, confirmedRound types.Round, genesisHash types.Digest, seed stateprooftypes.Seed, blockIntervalCommitment types.Digest) error {
 	// verifying attested vector commitments is currently exclusively supported with sha256 hashing, both for transactions
 	// and light block headers.
 	if transactionProofResponse.Hashtype != "sha256" {
@@ -129,7 +122,7 @@ func (t *TransactionVerifier) VerifyTransaction(transactionHash types.Digest, tr
 	var stibHashDigest types.Digest
 	copy(stibHashDigest[:], transactionProofResponse.Stibhash[:])
 
-	transactionLeaf := t.computeTransactionLeaf(transactionHash, stibHashDigest)
+	transactionLeaf := computeTransactionLeaf(transactionHash, stibHashDigest)
 	transactionProofRoot, err := computeVectorCommitmentMerkleRoot(transactionLeaf, transactionProofResponse.Idx,
 		transactionProofResponse.Proof, transactionProofResponse.Treedepth)
 
@@ -138,7 +131,7 @@ func (t *TransactionVerifier) VerifyTransaction(transactionHash types.Digest, tr
 	}
 
 	// We build the candidate light block header using the computed transactionProofRoot, hash and verify it.
-	candidateLightBlockHeaderLeaf := t.computeLightBlockHeaderLeaf(confirmedRound, transactionProofRoot, seed)
+	candidateLightBlockHeaderLeaf := computeLightBlockHeaderLeaf(confirmedRound, transactionProofRoot, genesisHash, seed)
 	lightBlockHeaderProofRoot, err := computeVectorCommitmentMerkleRoot(candidateLightBlockHeaderLeaf, lightBlockHeaderProofResponse.Index, lightBlockHeaderProofResponse.Proof,
 		lightBlockHeaderProofResponse.Treedepth)
 
