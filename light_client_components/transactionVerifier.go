@@ -26,11 +26,11 @@ const (
 )
 
 type TransactionVerifier struct {
-	genesisHash types.Digest
+	GenesisHash types.Digest
 }
 
 func InitializeTransactionVerifier(genesisHash types.Digest) *TransactionVerifier {
-	return &TransactionVerifier{genesisHash: genesisHash}
+	return &TransactionVerifier{GenesisHash: genesisHash}
 }
 
 func (t *TransactionVerifier) computeTransactionLeaf(txId types.Digest, stib types.Digest) types.Digest {
@@ -45,7 +45,7 @@ func (t *TransactionVerifier) computeLightBlockHeaderLeaf(roundNumber types.Roun
 	transactionCommitment types.Digest, seed stateprooftypes.Seed) types.Digest {
 	lightBlockheader := stateprooftypes.LightBlockHeader{
 		RoundNumber:         roundNumber,
-		GenesisHash:         t.genesisHash,
+		GenesisHash:         t.GenesisHash,
 		Sha256TxnCommitment: transactionCommitment,
 		Seed:                seed,
 	}
