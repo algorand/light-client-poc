@@ -7,19 +7,15 @@ import (
 )
 
 func main() {
-	assetDecoder, err := encoded_assets.InitializeDataDecoder("encoded_assets")
-	if err != nil {
-		fmt.Printf("Failed to initailzie asset decoder: %s\n", err)
-		return
-	}
-
-	genesisHash, round, seed, transactionHash, transactionProofResponse, lightBlockHeaderProofResponse, _, err := assetDecoder.GetParsedTransactionVerificationData()
+	genesisHash, round, seed, transactionHash, transactionProofResponse, lightBlockHeaderProofResponse, _, err :=
+		encoded_assets.GetParsedTransactionVerificationData("encoded_assets/transaction_verification")
 	if err != nil {
 		fmt.Printf("Failed to parse assets needed for transaction verification: %s\n", err)
 		return
 	}
 
-	genesisVotersCommitment, genesisVotersLnProvenWeight, stateProofMessage, stateProof, err := assetDecoder.GetParsedStateProofAdvancmentData()
+	genesisVotersCommitment, genesisVotersLnProvenWeight, stateProofMessage, stateProof, err :=
+		encoded_assets.GetParsedStateProofAdvancmentData("encoded_assets/state_proof_verification")
 	if err != nil {
 		fmt.Printf("Failed to parse assets needed for oracle state advancement: %s\n", err)
 		return
