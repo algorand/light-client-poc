@@ -1,4 +1,4 @@
-module light-client-poc
+module github.com/almog-t/light-client-poc
 
 go 1.17
 
