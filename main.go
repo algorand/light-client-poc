@@ -8,6 +8,10 @@ import (
 
 func main() {
 	genesisVotersCommitment, genesisVotersLnProvenWeight, err := encoded_assets.GetParsedGenesisData("encoded_assets/genesis/")
+	if err != nil {
+		fmt.Printf("Failed to parse genesis assets: %s\n", err)
+		return
+	}
 
 	genesisHash, round, seed, transactionHash, transactionProofResponse, lightBlockHeaderProofResponse, _, err :=
 		encoded_assets.GetParsedTransactionVerificationData("encoded_assets/transaction_verification/")
