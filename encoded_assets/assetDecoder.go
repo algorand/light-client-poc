@@ -11,51 +11,45 @@ import (
 )
 
 func GetParsedTransactionVerificationData(transactionVerificationDataPath string) (types.Digest, types.Round, stateprooftypes.Seed, types.Digest, models.ProofResponse,
-	models.LightBlockHeaderProof, types.Digest, error) {
+	models.LightBlockHeaderProof, error) {
 	var genesisHash types.Digest
 	err := utilities.DecodeFromFile(filepath.Join(transactionVerificationDataPath, "genesis_hash.json"), &genesisHash)
 	if err != nil {
-		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, types.Digest{}, err
+		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
 	var round types.Round
 	err = utilities.DecodeFromFile(filepath.Join(transactionVerificationDataPath, "round.json"), &round)
 	if err != nil {
-		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, types.Digest{}, err
+		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
 	var seed stateprooftypes.Seed
 	err = utilities.DecodeFromFile(filepath.Join(transactionVerificationDataPath, "seed.json"), &seed)
 	if err != nil {
-		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, types.Digest{}, err
+		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
 	var transactionId types.Digest
 	err = utilities.DecodeFromFile(filepath.Join(transactionVerificationDataPath, "transaction_id.json"), &transactionId)
 	if err != nil {
-		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, types.Digest{}, err
+		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
 	var transactionProofResponse models.ProofResponse
 	err = utilities.DecodeFromFile(filepath.Join(transactionVerificationDataPath, "transaction_proof_response.json"), &transactionProofResponse)
 	if err != nil {
-		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, types.Digest{}, err
+		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
 	var lightBlockHeaderProof models.LightBlockHeaderProof
 	err = utilities.DecodeFromFile(filepath.Join(transactionVerificationDataPath, "light_block_header_proof_response.json"), &lightBlockHeaderProof)
 	if err != nil {
-		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, types.Digest{}, err
-	}
-
-	var lightBlockHeaderCommitment types.Digest
-	err = utilities.DecodeFromFile(filepath.Join(transactionVerificationDataPath, "light_block_header_commitment.json"), &lightBlockHeaderCommitment)
-	if err != nil {
-		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, types.Digest{}, err
+		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
 	return genesisHash, round, seed, transactionId, transactionProofResponse,
-		lightBlockHeaderProof, lightBlockHeaderCommitment, nil
+		lightBlockHeaderProof, nil
 }
 
 func GetParsedGenesisData(genesisDataPath string) (stateprooftypes.GenericDigest, uint64, error) {

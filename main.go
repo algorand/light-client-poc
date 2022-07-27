@@ -13,7 +13,7 @@ func main() {
 		return
 	}
 
-	genesisHash, round, seed, transactionHash, transactionProofResponse, lightBlockHeaderProofResponse, _, err :=
+	genesisHash, round, seed, transactionHash, transactionProofResponse, lightBlockHeaderProofResponse, err :=
 		encoded_assets.GetParsedTransactionVerificationData("encoded_assets/transaction_verification/")
 	if err != nil {
 		fmt.Printf("Failed to parse assets needed for transaction verification: %s\n", err)
