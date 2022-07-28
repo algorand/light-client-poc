@@ -23,14 +23,18 @@ func InitializeCommitmentHistory(intervalSize uint64, capacity uint64) *Commitme
 	return &CommitmentHistory{
 		IntervalSize:     intervalSize,
 		Capacity:         capacity,
-		EarliestInterval: 0,
-		NextInterval:     0,
+		EarliestInterval: 1,
+		NextInterval:     1,
 		Data:             make(map[uint64]types.Digest),
 	}
 }
 
 func (c *CommitmentHistory) GetCommitment(round types.Round) (types.Digest, error) {
-	nearestInterval := (uint64(round) / c.IntervalSize) - 1
+	nearestInterval := uint64(round) / c.IntervalSize
+	if uint64(round)%c.IntervalSize == 0 {
+		nearestInterval -= 1
+	}
+	
 	if nearestInterval >= c.NextInterval || nearestInterval < c.EarliestInterval {
 		return types.Digest{}, ErrNoStateProofForRound
 	}
