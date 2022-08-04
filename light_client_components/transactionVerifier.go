@@ -31,12 +31,9 @@ const (
 // txId - the Sha256 hash of the transaction.
 // stibHash - the Sha256 of the transaction as it's saved in the block.
 func computeTransactionLeaf(txId types.Digest, stibHash types.Digest) types.Digest {
-	buf := make([]byte, 2*types.DigestSize)
-	copy(buf[:], txId[:])
-	copy(buf[types.DigestSize:], stibHash[:])
-	leaf := append([]byte(stateprooftypes.TxnMerkleLeaf), buf...)
+	leafSeparator := []byte(stateprooftypes.TxnMerkleLeaf)
 	// The leaf returned is of the form: Sha256("TL", Sha256(transaction), Sha256(transaction in block))
-	return sha256.Sum256(leaf)
+	return sha256.Sum256(append(append(leafSeparator, txId[:]...), stibHash[:]...))
 }
 
 // computeLightBlockHeaderLeaf receives the parameters comprising a light block header, and computes the leaf
