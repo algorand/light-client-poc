@@ -21,15 +21,15 @@ var (
 type NodePosition int
 
 const (
-	leftSibling NodePosition = iota
-	rightSibling
+	leftChild NodePosition = iota
+	rightChild
 )
 
 // computeTransactionLeaf receives the transaction ID and the signed transaction in block's hash, and computes
 // the leaf of the vector commitment associated with the transaction.
 // Parameters:
-// txId is the Sha256 hash of the transaction.
-// stibHash is the Sha256 of the transaction as it's saved in the block.
+// txId - the Sha256 hash of the transaction.
+// stibHash - the Sha256 of the transaction as it's saved in the block.
 func computeTransactionLeaf(txId types.Digest, stibHash types.Digest) types.Digest {
 	buf := make([]byte, 2*types.DigestSize)
 	copy(buf[:], txId[:])
@@ -42,10 +42,10 @@ func computeTransactionLeaf(txId types.Digest, stibHash types.Digest) types.Dige
 // computeLightBlockHeaderLeaf receives the parameters comprising a light block header, and computes the leaf
 // of the vector commitment associated with the transaction.
 // Parameters:
-// roundNumber is the round of the block to which the light block header belongs.
-// transactionCommitment is the sha256 vector commitment for the transactions in the block to which the light block header belongs.
-// genesisHash is the hash of the genesis block.
-// seed is the block's sortition seed.
+// roundNumber - the round of the block to which the light block header belongs.
+// transactionCommitment - the sha256 vector commitment for the transactions in the block to which the light block header belongs.
+// genesisHash - the hash of the genesis block.
+// seed - the block's sortition seed.
 func computeLightBlockHeaderLeaf(roundNumber types.Round,
 	transactionCommitment types.Digest, genesisHash types.Digest, seed stateprooftypes.Seed) types.Digest {
 	lightBlockheader := stateprooftypes.LightBlockHeader{
@@ -59,17 +59,16 @@ func computeLightBlockHeaderLeaf(roundNumber types.Round,
 	return sha256.Sum256(lightBlockheader.ToBeHashed())
 }
 
-// getVectorCommitmentPositions takes the index provided with the proof, which is a bitmap of positions,
-// and translates it to an array of node positions, starting from the LSB - this is the key difference
-// between vector commitments and merkle trees. Each position at index i of the result
-// corresponds to our expected node position relative to its sibling when computing the root,
-// at height i relative to the leaf.
+// getVectorCommitmentPositions takes the index provided with the proof and translates it to an array of node positions.
+// It does so by treating it as a bitmap of positions, starting from the MSB - this is the key difference
+// between vector commitments and merkle trees. Each position at index i of the result corresponds to our expected node
+// position relative to its sibling when computing the root at height i relative to the leaf.
 // For example, positions[0] is the position of the leaf relative to its sibling.
 // Parameters:
-// index is the node's index in the vector commitment tree.
-// depth is the node's depth in the vector commitment tree.
+// index - the leaf's index in the vector commitment tree.
+// depth - the length of the path from the leaf to the root.
 func getVectorCommitmentPositions(index uint64, depth uint64) ([]NodePosition, error) {
-	// A depth of 0 is only valid when the proof's length is also 0. Since the calling functions checks for the situation
+	// A depth of 0 is only valid when the proof's length is also 0. Since the calling function checks for the situation
 	// where both values are 0, depth of 0 must be invalid.
 	if depth == 0 {
 		return []NodePosition{}, ErrInvalidTreeDepth
@@ -91,47 +90,67 @@ func getVectorCommitmentPositions(index uint64, depth uint64) ([]NodePosition, e
 	for i := len(directions) - 1; i >= 0; i-- {
 		// We take index's current LSB, translate it to a node position and place it in index i.
 		directions[i] = NodePosition(index & 1)
-		// We shift index to the right, to prepare for the extracting of the next LSB.
+		// We shift the index to the right, to prepare for the extracting of the next LSB.
 		index >>= 1
 	}
 
 	return directions, nil
 }
 
-func computeVectorCommitmentMerkleRoot(leaf types.Digest, leafIndex uint64, proof []byte, treeDepth uint64) (types.Digest, error) {
+// computeVectorCommitmentRoot takes a vector commitment leaf, its index, a proof and the tree depth, and calculates
+// the vector commitment root using the provided data. This is done by each node's parent node using the proof,
+// starting from the leaf, until we reach the root.
+// Parameters:
+// leaf - the node we start computing the vector commitment from.
+// leafIndex - the leaf's index.
+// proof - the proof to use in computing the vector commitment root. It holds hashed sibling nodes for each parent node
+// calculated.
+// treeDepth - the length of the path from the leaf to the root.
+func computeVectorCommitmentRoot(leaf types.Digest, leafIndex uint64, proof []byte, treeDepth uint64) (types.Digest, error) {
+	// An empty proof is only possible when the leaf received is already the root, which means that the treeDepth
+	// must be 0. In this case, the result is the leaf itself.
 	if len(proof) == 0 && treeDepth == 0 {
 		return leaf, nil
 	}
 
-	nodeSize := uint64(sha256.New().Size())
-	if treeDepth*nodeSize != uint64(len(proof)) {
+	nodeHashSize := uint64(sha256.New().Size())
+	// The proof must hold exactly treeDepth node hashes to allow us to compute enough nodes to reach the root.
+	if treeDepth*nodeHashSize != uint64(len(proof)) {
 		return types.Digest{}, ErrProofLengthTreeDepthMismatch
 	}
 
+	// See comments on getVectorCommitmentPositions for more details on the contents of the positions variable.
 	positions, err := getVectorCommitmentPositions(leafIndex, treeDepth)
 	if err != nil {
 		return types.Digest{}, err
 	}
 
-	currentNodeHash := leaf
-	for currentLevel := uint64(0); currentLevel < treeDepth; currentLevel++ {
-		siblingIndex := currentLevel * nodeSize
-		siblingHash := proof[siblingIndex : siblingIndex+nodeSize]
+	// We start climbing from the leaf.
+	currentNode := leaf
+	// When distanceFromLeaf equals treeDepth, currentNode will contain the computed root.
+	for distanceFromLeaf := uint64(0); distanceFromLeaf < treeDepth; distanceFromLeaf++ {
+		siblingIndexInProof := distanceFromLeaf * nodeHashSize
+		// siblingHash is the next node to append to our current node, retrieved from the proof.
+		siblingHash := proof[siblingIndexInProof : siblingIndexInProof+nodeHashSize]
 
-		nextNode := []byte(stateprooftypes.MerkleArrayNode)
-		switch positions[currentLevel] {
-		case leftSibling:
-			nextNode = append(append(nextNode, currentNodeHash[:]...), siblingHash...)
-		case rightSibling:
-			nextNode = append(append(nextNode, siblingHash...), currentNodeHash[:]...)
+		// Vector commitment nodes are of the form Sha256("MA", left child, right child). To calculate the parent node,
+		// we have to use the positions array to determine if our current node is the left or right child.
+		// Positions[distanceFromLeaf] is the position of the current node at height distanceFromLeaf.
+		nodeSeparator := []byte(stateprooftypes.MerkleArrayNode)
+		var parentNode types.Digest
+		switch positions[distanceFromLeaf] {
+		case leftChild:
+			parentNode = sha256.Sum256(append(append(nodeSeparator, currentNode[:]...), siblingHash...))
+		case rightChild:
+			parentNode = sha256.Sum256(append(append(nodeSeparator, siblingHash...), currentNode[:]...))
 		default:
 			return types.Digest{}, ErrInvalidPosition
 		}
 
-		currentNodeHash = sha256.Sum256(nextNode)
+		currentNode = parentNode
 	}
 
-	return currentNodeHash, nil
+	return currentNode, nil
 }
 
 // VerifyTransaction receives a sha256 hashed transaction, a proof to compute the transaction's commitment, a proof
@@ -153,7 +172,7 @@ func VerifyTransaction(transactionHash types.Digest, transactionProofResponse mo
 	copy(stibHashDigest[:], transactionProofResponse.Stibhash[:])
 
 	transactionLeaf := computeTransactionLeaf(transactionHash, stibHashDigest)
-	transactionProofRoot, err := computeVectorCommitmentMerkleRoot(transactionLeaf, transactionProofResponse.Idx,
+	transactionProofRoot, err := computeVectorCommitmentRoot(transactionLeaf, transactionProofResponse.Idx,
 		transactionProofResponse.Proof, transactionProofResponse.Treedepth)
 
 	if err != nil {
@@ -162,7 +181,7 @@ func VerifyTransaction(transactionHash types.Digest, transactionProofResponse mo
 
 	// We build the candidate light block header using the computed transactionProofRoot, hash and verify it.
 	candidateLightBlockHeaderLeaf := computeLightBlockHeaderLeaf(confirmedRound, transactionProofRoot, genesisHash, seed)
-	lightBlockHeaderProofRoot, err := computeVectorCommitmentMerkleRoot(candidateLightBlockHeaderLeaf, lightBlockHeaderProofResponse.Index, lightBlockHeaderProofResponse.Proof,
+	lightBlockHeaderProofRoot, err := computeVectorCommitmentRoot(candidateLightBlockHeaderLeaf, lightBlockHeaderProofResponse.Index, lightBlockHeaderProofResponse.Proof,
 		lightBlockHeaderProofResponse.Treedepth)
 
 	if err != nil {

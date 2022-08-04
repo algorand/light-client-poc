@@ -21,9 +21,10 @@ type Oracle struct {
 
 // InitializeOracle initializes the Oracle using trusted genesis data.
 // Parameters:
-// intervalSize represents the number of rounds that occur between each state proof.
-// Both genesisVotersCommitment and genesisLnProvenWeight can be found in the developer portal.
-// capacity is the BlockIntervalCommitmentHistory window size
+// intervalSize - represents the number of rounds that occur between each state proof.
+// genesisVotersCommitment - the initial genesisVotersCommitment commitment. Real values can be found in the Algorand developer portal.
+// genesisLnProvenWeight - the initial LnProvenWeight. Real values can be found in the Algorand developer portal.
+// capacity - the BlockIntervalCommitmentHistory window size
 func InitializeOracle(intervalSize uint64, genesisVotersCommitment stateprooftypes.GenericDigest,
 	genesisLnProvenWeight uint64, capacity uint64) *Oracle {
 	return &Oracle{
@@ -42,8 +43,8 @@ func InitializeOracle(intervalSize uint64, genesisVotersCommitment stateprooftyp
 // and, if successful, updates the Oracle's state using the message and saves the block header commitment to the history.
 // This method should be called by a relay or some external process that is initiated when new Algorand state proofs are available.
 // Parameters:
-// stateProof is a slice containing the message packed state proof, as returned from the SDK API.
-// message is the decoded state proof message, unpacked using msgpack.
+// stateProof - a slice containing the message packed state proof, as returned from the SDK API.
+// message - the decoded state proof message, unpacked using msgpack.
 func (o *Oracle) AdvanceState(stateProof *stateprooftypes.EncodedStateProof, message stateprooftypes.Message) error {
 	// verifier is Algorand's implementation of the state proof verifier, exposed by the SDK. It uses the
 	// previous proven VotersCommitment and LnProvenWeight.
@@ -72,7 +73,7 @@ func (o *Oracle) AdvanceState(stateProof *stateprooftypes.EncodedStateProof, mes
 
 // GetStateProofCommitment retrieves a saved commitment for a specific round.
 // Parameters:
-// round is the round to which a commitment will be retrieved.
+// round - the round to which a commitment will be retrieved.
 func (o *Oracle) GetStateProofCommitment(round types.Round) (types.Digest, error) {
 	// Receiving a commitment that should cover a round requires calculating the round's interval and retrieving the commitment
 	// for that interval. See BlockIntervalCommitmentHistory.GetCommitment for more details.
