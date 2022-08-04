@@ -9,7 +9,6 @@ import (
 
 // Oracle is in charge of maintaining commitments for previous round intervals and allows, given a round, to retrieve
 // the vector commitment attesting to that round.
-
 type Oracle struct {
 	// BlockIntervalCommitmentHistory is a sliding window that holds block interval commitments for each interval. Given a round,
 	// it calculates that round's interval and retrieves the block interval commitment for the calculated interval.
@@ -71,6 +70,9 @@ func (o *Oracle) AdvanceState(stateProof *stateprooftypes.EncodedStateProof, mes
 	return nil
 }
 
+// GetStateProofCommitment retrieves a saved commitment for a specific round.
+// Parameters:
+// round is the round to which a commitment will be retrieved.
 func (o *Oracle) GetStateProofCommitment(round types.Round) (types.Digest, error) {
 	// Receiving a commitment that should cover a round requires calculating the round's interval and retrieving the commitment
 	// for that interval. See BlockIntervalCommitmentHistory.GetCommitment for more details.

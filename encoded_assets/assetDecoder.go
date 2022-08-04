@@ -10,6 +10,8 @@ import (
 	"github.com/almog-t/light-client-poc/utilities"
 )
 
+// These functions take the encoded assets, committed as examples, and parse them.
+
 func GetParsedTransactionVerificationData(transactionVerificationDataPath string) (types.Digest, types.Round, stateprooftypes.Seed, types.Digest, models.ProofResponse,
 	models.LightBlockHeaderProof, error) {
 	var genesisHash types.Digest
