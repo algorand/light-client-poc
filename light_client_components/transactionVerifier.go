@@ -18,21 +18,34 @@ var (
 	ErrInvalidPosition              = errors.New("invalid position for node")
 )
 
-type Position int
+type NodePosition int
 
 const (
-	left Position = iota
-	right
+	leftSibling NodePosition = iota
+	rightSibling
 )
 
-func computeTransactionLeaf(txId types.Digest, stib types.Digest) types.Digest {
+// computeTransactionLeaf receives the transaction ID and the signed transaction in block's hash, and computes
+// the leaf of the vector commitment associated with the transaction.
+// Parameters:
+// txId is the Sha256 hash of the transaction.
+// stibHash is the Sha256 of the transaction as it's saved in the block.
+func computeTransactionLeaf(txId types.Digest, stibHash types.Digest) types.Digest {
 	buf := make([]byte, 2*types.DigestSize)
 	copy(buf[:], txId[:])
-	copy(buf[types.DigestSize:], stib[:])
+	copy(buf[types.DigestSize:], stibHash[:])
 	leaf := append([]byte(stateprooftypes.TxnMerkleLeaf), buf...)
+	// The leaf returned is of the form: Sha256("TL", Sha256(transaction), Sha256(transaction in block))
 	return sha256.Sum256(leaf)
 }
 
+// computeLightBlockHeaderLeaf receives the parameters comprising a light block header, and computes the leaf
+// of the vector commitment associated with the transaction.
+// Parameters:
+// roundNumber is the round of the block to which the light block header belongs.
+// transactionCommitment is the sha256 vector commitment for the transactions in the block to which the light block header belongs.
+// genesisHash is the hash of the genesis block.
+// seed is the block's sortition seed.
 func computeLightBlockHeaderLeaf(roundNumber types.Round,
 	transactionCommitment types.Digest, genesisHash types.Digest, seed stateprooftypes.Seed) types.Digest {
 	lightBlockheader := stateprooftypes.LightBlockHeader{
@@ -42,26 +55,43 @@ func computeLightBlockHeaderLeaf(roundNumber types.Round,
 		Seed:                seed,
 	}
 
+	// The leaf returned is of the form Sha256(lightBlockHeader)
 	return sha256.Sum256(lightBlockheader.ToBeHashed())
 }
 
 // getVectorCommitmentPositions takes the index provided with the proof, which is a bitmap of positions,
-// and translates it to an array of positions, starting from the LSB - this is the key difference
-// between vector commitments and merkle trees. The resulting array should contain a number of positions equal to the
-// depth of the tree - the length of the path between the root and the leaves.
-// Since each bit of the index is mapped to an element in the resulting positions array,
-// the index must contain a number of bits amounting to the depth parameter, which means it must be smaller than 2 ^ depth.
-func getVectorCommitmentPositions(index uint64, depth uint64) ([]Position, error) {
+// and translates it to an array of node positions, starting from the LSB - this is the key difference
+// between vector commitments and merkle trees. Each position at index i of the result
+// corresponds to our expected node position relative to its sibling when computing the root,
+// at height i relative to the leaf.
+// For example, positions[0] is the position of the leaf relative to its sibling.
+// Parameters:
+// index is the node's index in the vector commitment tree.
+// depth is the node's depth in the vector commitment tree.
+func getVectorCommitmentPositions(index uint64, depth uint64) ([]NodePosition, error) {
+	// A depth of 0 is only valid when the proof's length is also 0. Since the calling functions checks for the situation
+	// where both values are 0, depth of 0 must be invalid.
 	if depth == 0 {
-		return []Position{}, ErrInvalidTreeDepth
+		return []NodePosition{}, ErrInvalidTreeDepth
 	}
 
+	// Since each bit of the index is mapped to an element in the resulting positions array,
+	// the index must contain a number of bits amounting to the depth parameter, which means it must be smaller than 2 ^ depth.
 	if index >= 1<<depth {
-		return []Position{}, ErrIndexDepthMismatch
+		return []NodePosition{}, ErrIndexDepthMismatch
 	}
-	directions := make([]Position, depth)
+
+	// The resulting array should contain a number of positions equal to the depth of the tree -
+	// the length of the path between the root and the leaves - as that is the amounts of nodes traversed when calculating
+	// the vector commitment root.
+	directions := make([]NodePosition, depth)
+
+	// We iterate on the resulting array starting from the end, to allow us to extract LSBs, yet have the eventual result
+	// be equivalent to extracting MSBs.
 	for i := len(directions) - 1; i >= 0; i-- {
-		directions[i] = Position(index & 1)
+		// We take index's current LSB, translate it to a node position and place it in index i.
+		directions[i] = NodePosition(index & 1)
+		// We shift index to the right, to prepare for the extracting of the next LSB.
 		index >>= 1
 	}
 
@@ -90,9 +120,9 @@ func computeVectorCommitmentMerkleRoot(leaf types.Digest, leafIndex uint64, proo
 
 		nextNode := []byte(stateprooftypes.MerkleArrayNode)
 		switch positions[currentLevel] {
-		case left:
+		case leftSibling:
 			nextNode = append(append(nextNode, currentNodeHash[:]...), siblingHash...)
-		case right:
+		case rightSibling:
 			nextNode = append(append(nextNode, siblingHash...), currentNodeHash[:]...)
 		default:
 			return types.Digest{}, ErrInvalidPosition
