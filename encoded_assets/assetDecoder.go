@@ -25,25 +25,25 @@ func decodeFromFile(encodedPath string, target interface{}) error {
 func GetParsedTransactionVerificationData(transactionVerificationDataPath string) (types.Digest, types.Round, stateprooftypes.Seed, types.Digest, models.ProofResponse,
 	models.LightBlockHeaderProof, error) {
 	var genesisHash types.Digest
-	err := decodeFromFile(filepath.Join(transactionVerificationDataPath, "genesis_hash.json"), &genesisHash)
+	err := decodeFromFile(filepath.Join(transactionVerificationDataPath, "genesis_hash.txt"), &genesisHash)
 	if err != nil {
 		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
 	var round types.Round
-	err = decodeFromFile(filepath.Join(transactionVerificationDataPath, "round.json"), &round)
+	err = decodeFromFile(filepath.Join(transactionVerificationDataPath, "round.txt"), &round)
 	if err != nil {
 		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
 	var seed stateprooftypes.Seed
-	err = decodeFromFile(filepath.Join(transactionVerificationDataPath, "seed.json"), &seed)
+	err = decodeFromFile(filepath.Join(transactionVerificationDataPath, "seed.txt"), &seed)
 	if err != nil {
 		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
 	var transactionId types.Digest
-	err = decodeFromFile(filepath.Join(transactionVerificationDataPath, "transaction_id.json"), &transactionId)
+	err = decodeFromFile(filepath.Join(transactionVerificationDataPath, "transaction_id.txt"), &transactionId)
 	if err != nil {
 		return types.Digest{}, 0, stateprooftypes.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
@@ -66,13 +66,13 @@ func GetParsedTransactionVerificationData(transactionVerificationDataPath string
 
 func GetParsedGenesisData(genesisDataPath string) (stateprooftypes.GenericDigest, uint64, error) {
 	genesisVotersCommitment := stateprooftypes.GenericDigest{}
-	err := decodeFromFile(filepath.Join(genesisDataPath, "genesis_voters_commitment.json"), &genesisVotersCommitment)
+	err := decodeFromFile(filepath.Join(genesisDataPath, "genesis_voters_commitment.txt"), &genesisVotersCommitment)
 	if err != nil {
 		return stateprooftypes.GenericDigest{}, 0, err
 	}
 
 	genesisVotersLnProvenWeight := uint64(0)
-	err = decodeFromFile(filepath.Join(genesisDataPath, "genesis_voters_ln_proven_weight.json"), &genesisVotersLnProvenWeight)
+	err = decodeFromFile(filepath.Join(genesisDataPath, "genesis_voters_ln_proven_weight.txt"), &genesisVotersLnProvenWeight)
 	if err != nil {
 		return stateprooftypes.GenericDigest{}, 0, err
 	}
@@ -89,7 +89,7 @@ func GetParsedStateProofAdvancmentData(stateProofVerificationDataPath string) (s
 	}
 
 	var stateProof stateprooftypes.EncodedStateProof
-	err = decodeFromFile(filepath.Join(stateProofVerificationDataPath, "state_proof.json"), &stateProof)
+	err = decodeFromFile(filepath.Join(stateProofVerificationDataPath, "state_proof.txt"), &stateProof)
 	if err != nil {
 		return stateprooftypes.Message{}, nil, err
 	}
