@@ -1,4 +1,4 @@
-package utilities
+package oracle
 
 import (
 	"errors"
