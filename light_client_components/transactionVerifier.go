@@ -28,8 +28,8 @@ const (
 // computeTransactionLeaf receives the transaction ID and the signed transaction in block's hash, and computes
 // the leaf of the vector commitment associated with the transaction.
 // Parameters:
-// txId - the Sha256 hash of the transaction.
-// stibHash - the Sha256 of the transaction as it's saved in the block.
+// txId - the Sha256 hash of the message packed transaction.
+// stibHash - the Sha256 of the message packed transaction as it's saved in the block.
 func computeTransactionLeaf(txId types.Digest, stibHash types.Digest) types.Digest {
 	leafSeparator := []byte(stateprooftypes.TxnMerkleLeaf)
 	// The leaf returned is of the form: Sha256("TL", Sha256(transaction), Sha256(transaction in block))
@@ -42,7 +42,7 @@ func computeTransactionLeaf(txId types.Digest, stibHash types.Digest) types.Dige
 // roundNumber - the round of the block to which the light block header belongs.
 // transactionCommitment - the sha256 vector commitment for the transactions in the block to which the light block header belongs.
 // genesisHash - the hash of the genesis block.
-// seed - the block's sortition seed.
+// seed - the sortition seed of the block associated with the light block header.
 func computeLightBlockHeaderLeaf(roundNumber types.Round,
 	transactionCommitment types.Digest, genesisHash types.Digest, seed stateprooftypes.Seed) types.Digest {
 	lightBlockheader := stateprooftypes.LightBlockHeader{
@@ -151,12 +151,17 @@ func computeVectorCommitmentRoot(leaf types.Digest, leafIndex uint64, proof []by
 }
 
 // VerifyTransaction receives a sha256 hashed transaction, a proof to compute the transaction's commitment, a proof
-// to compute the light block header's commitment, and an expected commitment to compare to.
-// Verification works as follows:
-//	1. Compute the transaction's vector commitment using the provided transaction proof.
-//	2. Build a candidate light block header using the computed vector commitment.
-// 	3. Compute the candidate light block header's vector commitment using the provided light block header proof.
-// 	4. Verify that the computed candidate vector commitment matches the expected vector commitment.
+// to compute the commitment belonging to the light block header associated with the transaction's commitment,
+// and an expected commitment to compare to. The function verifies that the computed commitment using the given proofs
+// is identical to the provided commitment.
+// Parameters:
+// transactionHash - the result of invoking Sha256 on the message packed transaction.
+// transactionProofResponse - the response returned by Algorand when queried using the SDK's GetTransactionProof.
+// lightBlockHeaderProofResponse - the response returned by Algorand when queried using the SDK's GetLightBlockHeaderProof.
+// confirmedRound - the round in which the given transaction was confirmed.
+// genesisHash - the hash of the genesis block.
+// seed - the sortition seed of the block associated with the light block header.
+// blockIntervalCommitment - the commitment to compare to, provided by the Oracle.
 func VerifyTransaction(transactionHash types.Digest, transactionProofResponse models.ProofResponse,
 	lightBlockHeaderProofResponse models.LightBlockHeaderProof, confirmedRound types.Round, genesisHash types.Digest, seed stateprooftypes.Seed, blockIntervalCommitment types.Digest) error {
 	// verifying attested vector commitments is currently exclusively supported with sha256 hashing, both for transactions
@@ -168,7 +173,10 @@ func VerifyTransaction(transactionHash types.Digest, transactionProofResponse mo
 	var stibHashDigest types.Digest
 	copy(stibHashDigest[:], transactionProofResponse.Stibhash[:])
 
+	// We first compute the leaf in the vector commitment that attests to the given transaction.
 	transactionLeaf := computeTransactionLeaf(transactionHash, stibHashDigest)
+	// We use the transactionLeaf and the given transactionProofResponse to compute the root of the vector commitment
+	// that attests to the given transaction.
 	transactionProofRoot, err := computeVectorCommitmentRoot(transactionLeaf, transactionProofResponse.Idx,
 		transactionProofResponse.Proof, transactionProofResponse.Treedepth)
 
@@ -176,8 +184,11 @@ func VerifyTransaction(transactionHash types.Digest, transactionProofResponse mo
 		return err
 	}
 
-	// We build the candidate light block header using the computed transactionProofRoot, hash and verify it.
+	// We use our computed transaction vector commitment root, saved in transactionProofRoot, and the given data
+	// to calculate the leaf in the vector commitment that attests to the light block headers.
 	candidateLightBlockHeaderLeaf := computeLightBlockHeaderLeaf(confirmedRound, transactionProofRoot, genesisHash, seed)
+	// We use the candidateLightBlockHeaderLeaf and the given lightBlockHeaderProofResponse to compute the root of the vector
+	// commitment that attests to the candidateLightBlockHeaderLeaf.
 	lightBlockHeaderProofRoot, err := computeVectorCommitmentRoot(candidateLightBlockHeaderLeaf, lightBlockHeaderProofResponse.Index, lightBlockHeaderProofResponse.Proof,
 		lightBlockHeaderProofResponse.Treedepth)
 
@@ -185,6 +196,7 @@ func VerifyTransaction(transactionHash types.Digest, transactionProofResponse mo
 		return err
 	}
 
+	// We verify that the given commitment, provided by the Oracle, is identical to the computed commitment
 	if bytes.Equal(lightBlockHeaderProofRoot[:], blockIntervalCommitment[:]) != true {
 		return ErrRootMismatch
 	}
