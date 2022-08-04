@@ -20,20 +20,19 @@ type Oracle struct {
 
 // InitializeOracle initializes the Oracle using trusted genesis data.
 // Parameters:
+// firstAttestedRound - the first round to which a state proof message attests.
 // intervalSize - represents the number of rounds that occur between each state proof.
 // genesisVotersCommitment - the initial genesisVotersCommitment commitment. Real values can be found in the Algorand developer portal.
 // genesisLnProvenWeight - the initial LnProvenWeight. Real values can be found in the Algorand developer portal.
-// capacity - the BlockIntervalCommitmentHistory window size
-func InitializeOracle(intervalSize uint64, genesisVotersCommitment stateprooftypes.GenericDigest,
+// capacity - the maximum number of commitments to hold before discarding the earliest commitment.
+func InitializeOracle(firstAttestedRound uint64, intervalSize uint64, genesisVotersCommitment stateprooftypes.GenericDigest,
 	genesisLnProvenWeight uint64, capacity uint64) *Oracle {
 	return &Oracle{
-		// The BlockIntervalCommitmentHistory is initialized using the interval size (to calculate a given round's interval
-		// when retrieving that round's commitment) and its capacity.
-		BlockIntervalCommitmentHistory: InitializeCommitmentHistory(intervalSize, capacity),
-		// VotersCommitment is initialized using genesis data, which can be found in Algorand's developer portal.
-		VotersCommitment: genesisVotersCommitment,
-		// LnProvenWeight is initialized using genesis data, which can be found in Algorand's developer portal.
-		LnProvenWeight: genesisLnProvenWeight,
+		// The BlockIntervalCommitmentHistory is initialized using the first attested round,
+		// the interval size and its capacity.
+		BlockIntervalCommitmentHistory: InitializeCommitmentHistory(firstAttestedRound, intervalSize, capacity),
+		VotersCommitment:               genesisVotersCommitment,
+		LnProvenWeight:                 genesisLnProvenWeight,
 	}
 }
 

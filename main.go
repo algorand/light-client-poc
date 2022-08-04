@@ -29,14 +29,15 @@ func main() {
 	}
 
 	intervalSize := stateProofMessage.LastAttestedRound - stateProofMessage.FirstAttestedRound + 1
-	oracle := oracle.InitializeOracle(intervalSize, genesisVotersCommitment, genesisVotersLnProvenWeight, 1000)
-	err = oracle.AdvanceState(stateProof, stateProofMessage)
+	firstAttestedRound := stateProofMessage.FirstAttestedRound
+	oracleInstance := oracle.InitializeOracle(firstAttestedRound, intervalSize, genesisVotersCommitment, genesisVotersLnProvenWeight, 1000)
+	err = oracleInstance.AdvanceState(stateProof, stateProofMessage)
 	if err != nil {
 		fmt.Printf("Failed to advance oracle state: %s\n", err)
 		return
 	}
 
-	desiredTransactionCommitment, err := oracle.GetStateProofCommitment(round)
+	desiredTransactionCommitment, err := oracleInstance.GetStateProofCommitment(round)
 	if err != nil {
 		fmt.Printf("Failed to retrieve commitment interval for round %d: %s\n", round, err)
 		return
