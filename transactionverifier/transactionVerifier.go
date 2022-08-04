@@ -1,4 +1,4 @@
-package light_client_components
+package transactionverifier
 
 import (
 	"bytes"

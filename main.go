@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/almog-t/light-client-poc/encoded_assets"
-	"github.com/almog-t/light-client-poc/light_client_components"
+	"github.com/almog-t/light-client-poc/oracle"
+	"github.com/almog-t/light-client-poc/transactionverifier"
 )
 
 func main() {
@@ -28,7 +29,7 @@ func main() {
 	}
 
 	intervalSize := stateProofMessage.LastAttestedRound - stateProofMessage.FirstAttestedRound + 1
-	oracle := light_client_components.InitializeOracle(intervalSize, genesisVotersCommitment, genesisVotersLnProvenWeight, 1000)
+	oracle := oracle.InitializeOracle(intervalSize, genesisVotersCommitment, genesisVotersLnProvenWeight, 1000)
 	err = oracle.AdvanceState(stateProof, stateProofMessage)
 	if err != nil {
 		fmt.Printf("Failed to advance oracle state: %s\n", err)
@@ -41,7 +42,7 @@ func main() {
 		return
 	}
 
-	err = light_client_components.VerifyTransaction(transactionHash, transactionProofResponse,
+	err = transactionverifier.VerifyTransaction(transactionHash, transactionProofResponse,
 		lightBlockHeaderProofResponse, round, genesisHash, seed, desiredTransactionCommitment)
 
 	if err != nil {

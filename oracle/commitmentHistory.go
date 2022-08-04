@@ -9,16 +9,25 @@ var (
 	ErrNoStateProofForRound = errors.New("round belongs to an interval without a matching state proof")
 )
 
+// CommitmentHistory is our implementation of the sliding window in charge of holding block interval commitments for
+// each interval, and for retrieving the appropriate commitment for a given round by calculating the interval that covers
+// the given round. This implementation might look significantly different in an actual light client, as a result of
+// available resources and of the environment the light client is developed in.
 type CommitmentHistory struct {
-	IntervalSize     uint64
-	Capacity         uint64
+	// IntervalSize is The number of rounds each state proof message attests to.
+	IntervalSize uint64
+	// Capacity is the capacity of the window - inserting a commitment when the window is at capacity will cause the
+	// earliest commitment to be discarded.
+	Capacity uint64
+	// EarliestInterval is the earliest interval currently saved in history.
 	EarliestInterval uint64
-	NextInterval     uint64
-	Data             map[uint64]types.Digest
+	// NextInterval is the interval to which the next state proof attest.
+	NextInterval uint64
+	// Data is a map of intervals to their block interval commitment.
+	Data map[uint64]types.Digest
 }
 
-// InitializeCommitmentHistory initializes the commitment history with the interval size and the capacity. Note that
-// in an actual light client, some calculation would have to be made to initialize the earliest interval correctly.
+// InitializeCommitmentHistory initializes the commitment history with the interval size and the capacity.
 func InitializeCommitmentHistory(intervalSize uint64, capacity uint64) *CommitmentHistory {
 	return &CommitmentHistory{
 		IntervalSize:     intervalSize,
@@ -34,7 +43,7 @@ func (c *CommitmentHistory) GetCommitment(round types.Round) (types.Digest, erro
 	if uint64(round)%c.IntervalSize == 0 {
 		nearestInterval -= 1
 	}
-	
+
 	if nearestInterval >= c.NextInterval || nearestInterval < c.EarliestInterval {
 		return types.Digest{}, ErrNoStateProofForRound
 	}

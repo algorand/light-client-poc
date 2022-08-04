@@ -1,10 +1,9 @@
-package light_client_components
+package oracle
 
 import (
 	"github.com/algorand/go-algorand-sdk/stateproofs/stateprooftypes"
 	"github.com/algorand/go-algorand-sdk/stateproofs/stateproofverification"
 	"github.com/algorand/go-algorand-sdk/types"
-	"github.com/almog-t/light-client-poc/utilities"
 )
 
 // Oracle is in charge of maintaining commitments for previous round intervals and allows, given a round, to retrieve
@@ -12,7 +11,7 @@ import (
 type Oracle struct {
 	// BlockIntervalCommitmentHistory is a sliding window that holds block interval commitments for each interval. Given a round,
 	// it calculates that round's interval and retrieves the block interval commitment for the calculated interval.
-	BlockIntervalCommitmentHistory *utilities.CommitmentHistory
+	BlockIntervalCommitmentHistory *CommitmentHistory
 	// VotersCommitment is the current voters commitment that will be used to verify the next state proof.
 	VotersCommitment stateprooftypes.GenericDigest
 	// LnProvenWeight is the ln of the current proven weight. This value will be used to verify the next state proof.
@@ -30,7 +29,7 @@ func InitializeOracle(intervalSize uint64, genesisVotersCommitment stateprooftyp
 	return &Oracle{
 		// The BlockIntervalCommitmentHistory is initialized using the interval size (to calculate a given round's interval
 		// when retrieving that round's commitment) and its capacity.
-		BlockIntervalCommitmentHistory: utilities.InitializeCommitmentHistory(intervalSize, capacity),
+		BlockIntervalCommitmentHistory: InitializeCommitmentHistory(intervalSize, capacity),
 		// VotersCommitment is initialized using genesis data, which can be found in Algorand's developer portal.
 		VotersCommitment: genesisVotersCommitment,
 		// LnProvenWeight is initialized using genesis data, which can be found in Algorand's developer portal.
