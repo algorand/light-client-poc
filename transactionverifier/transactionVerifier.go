@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
-	"github.com/algorand/go-algorand-sdk/stateproofs/stateprooftypes"
+	"github.com/algorand/go-algorand-sdk/stateproofs/transactionverificationtypes"
 	"github.com/algorand/go-algorand-sdk/types"
 )
 
@@ -31,7 +31,7 @@ const (
 // txId - the Sha256 hash of the message packed transaction.
 // stibHash - the Sha256 of the message packed transaction as it's saved in the block.
 func computeTransactionLeaf(txId types.Digest, stibHash types.Digest) types.Digest {
-	leafSeparator := []byte(stateprooftypes.TxnMerkleLeaf)
+	leafSeparator := []byte(transactionverificationtypes.TxnMerkleLeaf)
 	// The leaf returned is of the form: Sha256("TL", Sha256(transaction), Sha256(transaction in block))
 	return sha256.Sum256(append(append(leafSeparator, txId[:]...), stibHash[:]...))
 }
@@ -44,8 +44,8 @@ func computeTransactionLeaf(txId types.Digest, stibHash types.Digest) types.Dige
 // genesisHash - the hash of the genesis block.
 // seed - the sortition seed of the block associated with the light block header.
 func computeLightBlockHeaderLeaf(roundNumber types.Round,
-	transactionCommitment types.Digest, genesisHash types.Digest, seed stateprooftypes.Seed) types.Digest {
-	lightBlockheader := stateprooftypes.LightBlockHeader{
+	transactionCommitment types.Digest, genesisHash types.Digest, seed transactionverificationtypes.Seed) types.Digest {
+	lightBlockheader := transactionverificationtypes.LightBlockHeader{
 		RoundNumber:         roundNumber,
 		GenesisHash:         genesisHash,
 		Sha256TxnCommitment: transactionCommitment,
@@ -133,7 +133,7 @@ func computeVectorCommitmentRoot(leaf types.Digest, leafIndex uint64, proof []by
 		// Vector commitment nodes are of the form Sha256("MA", left child, right child). To calculate the parent node,
 		// we have to use the positions array to determine if our current node is the left or right child.
 		// Positions[distanceFromLeaf] is the position of the current node at height distanceFromLeaf.
-		nodeSeparator := []byte(stateprooftypes.MerkleArrayNode)
+		nodeSeparator := []byte(transactionverificationtypes.MerkleArrayNode)
 		var parentNode types.Digest
 		switch positions[distanceFromLeaf] {
 		case leftChild:
@@ -163,7 +163,7 @@ func computeVectorCommitmentRoot(leaf types.Digest, leafIndex uint64, proof []by
 // seed - the sortition seed of the block associated with the light block header.
 // blockIntervalCommitment - the commitment to compare to, provided by the Oracle.
 func VerifyTransaction(transactionHash types.Digest, transactionProofResponse models.ProofResponse,
-	lightBlockHeaderProofResponse models.LightBlockHeaderProof, confirmedRound types.Round, genesisHash types.Digest, seed stateprooftypes.Seed, blockIntervalCommitment types.Digest) error {
+	lightBlockHeaderProofResponse models.LightBlockHeaderProof, confirmedRound types.Round, genesisHash types.Digest, seed transactionverificationtypes.Seed, blockIntervalCommitment types.Digest) error {
 	// verifying attested vector commitments is currently exclusively supported with sha256 hashing, both for transactions
 	// and light block headers.
 	if transactionProofResponse.Hashtype != "sha256" {

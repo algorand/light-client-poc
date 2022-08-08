@@ -1,8 +1,8 @@
 package oracle
 
 import (
-	"github.com/algorand/go-algorand-sdk/stateproofs/stateprooftypes"
 	"github.com/algorand/go-algorand-sdk/stateproofs/stateproofverification"
+	"github.com/algorand/go-algorand-sdk/stateproofs/transactionverificationtypes"
 	"github.com/algorand/go-algorand-sdk/types"
 )
 
@@ -13,7 +13,7 @@ type Oracle struct {
 	// it calculates that round's interval and retrieves the block interval commitment for the calculated interval.
 	BlockIntervalCommitmentHistory *CommitmentHistory
 	// VotersCommitment is the current voters commitment that will be used to verify the next state proof.
-	VotersCommitment stateprooftypes.GenericDigest
+	VotersCommitment transactionverificationtypes.GenericDigest
 	// LnProvenWeight is the ln of the current proven weight. This value will be used to verify the next state proof.
 	LnProvenWeight uint64
 }
@@ -25,7 +25,7 @@ type Oracle struct {
 // genesisVotersCommitment - the initial genesisVotersCommitment commitment. Real values can be found in the Algorand developer portal.
 // genesisLnProvenWeight - the initial LnProvenWeight. Real values can be found in the Algorand developer portal.
 // capacity - the maximum number of commitments to hold before discarding the earliest commitment.
-func InitializeOracle(firstAttestedRound uint64, intervalSize uint64, genesisVotersCommitment stateprooftypes.GenericDigest,
+func InitializeOracle(firstAttestedRound uint64, intervalSize uint64, genesisVotersCommitment transactionverificationtypes.GenericDigest,
 	genesisLnProvenWeight uint64, capacity uint64) *Oracle {
 	return &Oracle{
 		// The BlockIntervalCommitmentHistory is initialized using the first attested round,
@@ -43,7 +43,7 @@ func InitializeOracle(firstAttestedRound uint64, intervalSize uint64, genesisVot
 // Parameters:
 // stateProof - a slice containing the message packed state proof, as returned from the SDK API.
 // message - the decoded state proof message, unpacked using msgpack.
-func (o *Oracle) AdvanceState(stateProof *stateprooftypes.EncodedStateProof, message stateprooftypes.Message) error {
+func (o *Oracle) AdvanceState(stateProof *transactionverificationtypes.EncodedStateProof, message transactionverificationtypes.Message) error {
 	// verifier is Algorand's implementation of the state proof verifier, exposed by the SDK. It uses the
 	// previous proven VotersCommitment and LnProvenWeight.
 	verifier := stateproofverification.InitializeVerifier(o.VotersCommitment, o.LnProvenWeight)
