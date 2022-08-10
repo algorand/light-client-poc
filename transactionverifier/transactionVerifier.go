@@ -94,7 +94,7 @@ func getVectorCommitmentPositions(index uint64, depth uint64) ([]NodePosition, e
 	return directions, nil
 }
 
-// computeVectorCommitmentRoot takes a vector commitment leaf, its index, a proof and the tree depth, and calculates
+// computeVectorCommitmentRoot takes a vector commitment leaf, its index, a proof, and a tree depth. it calculates
 // the vector commitment root using the provided data. This is done by each node's parent node using the proof,
 // starting from the leaf, until we reach the root.
 // Parameters:
