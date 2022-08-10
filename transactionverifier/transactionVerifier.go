@@ -40,7 +40,7 @@ func computeTransactionLeaf(txId types.Digest, stibHash types.Digest) types.Dige
 // of the vector commitment associated with the transaction.
 // Parameters:
 // roundNumber - the round of the block to which the light block header belongs.
-// transactionCommitment - the sha256 vector commitment for the transactions in the block to which the light block header belongs.
+// transactionCommitment - the sha256 vector commitment root for the transactions in the block to which the light block header belongs.
 // genesisHash - the hash of the genesis block.
 // seed - the sortition seed of the block associated with the light block header.
 func computeLightBlockHeaderLeaf(roundNumber types.Round,
@@ -98,7 +98,7 @@ func getVectorCommitmentPositions(index uint64, depth uint64) ([]NodePosition, e
 // the vector commitment root using the provided data. This is done by each node's parent node using the proof,
 // starting from the leaf, until we reach the root.
 // Parameters:
-// leaf - the node we start computing the vector commitment from.
+// leaf - the node we start computing the vector commitment root from.
 // leafIndex - the leaf's index.
 // proof - the proof to use in computing the vector commitment root. It holds hashed sibling nodes for each parent node
 // calculated.
@@ -164,7 +164,7 @@ func computeVectorCommitmentRoot(leaf types.Digest, leafIndex uint64, proof []by
 // blockIntervalCommitment - the commitment to compare to, provided by the Oracle.
 func VerifyTransaction(transactionHash types.Digest, transactionProofResponse models.ProofResponse,
 	lightBlockHeaderProofResponse models.LightBlockHeaderProof, confirmedRound types.Round, genesisHash types.Digest, seed transactionverificationtypes.Seed, blockIntervalCommitment types.Digest) error {
-	// verifying attested vector commitments is currently exclusively supported with sha256 hashing, both for transactions
+	// verifying attested vector commitment roots is currently exclusively supported with sha256 hashing, both for transactions
 	// and light block headers.
 	if transactionProofResponse.Hashtype != "sha256" {
 		return ErrUnsupportedHashFunction

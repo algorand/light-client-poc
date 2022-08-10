@@ -7,14 +7,15 @@ import (
 )
 
 // Oracle is in charge of maintaining commitments for previous round intervals and allows, given a round, to retrieve
-// the vector commitment attesting to that round.
+// the vector commitment root attesting to that round.
 type Oracle struct {
 	// BlockIntervalCommitmentHistory is a sliding window that holds block interval commitments for each interval. Given a round,
 	// it calculates that round's interval and retrieves the block interval commitment for the calculated interval.
 	BlockIntervalCommitmentHistory *CommitmentHistory
-	// VotersCommitment is the current voters commitment that will be used to verify the next state proof.
+	// VotersCommitment is the vector commitment root of the top N accounts to sign the next StateProof.
 	VotersCommitment transactionverificationtypes.GenericDigest
-	// LnProvenWeight is the ln of the current proven weight. This value will be used to verify the next state proof.
+	// LnProvenWeight is an integer value representing the natural log of the proven weight with 16 bits of precision.
+	// This value would be used to verify the next state proof.
 	LnProvenWeight uint64
 }
 
@@ -37,8 +38,10 @@ func InitializeOracle(firstAttestedRound uint64, intervalSize uint64, genesisVot
 }
 
 // AdvanceState receives a message packed state proof, provided by the SDK API, and a state proof message that the
-// state proof attests to. It verifies the message using the proof and the verifier from the previous round,
-// and, if successful, updates the Oracle's state using the message and saves the block header commitment to the history.
+// state proof attests to. It verifies the message using the proof given and the VotersCommitment and LnProvenWeight
+// from the previous state proof message.
+// If successful, it updates the Oracle's VotersCommitment and LnProvenWeight using their values from the new message,
+// and saves the block header commitment to the history.
 // This method should be called by a relay or some external process that is initiated when new Algorand state proofs are available.
 // Parameters:
 // stateProof - a slice containing the message packed state proof, as returned from the SDK API.
