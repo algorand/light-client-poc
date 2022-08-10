@@ -157,8 +157,8 @@ func computeVectorCommitmentRoot(leaf types.Digest, leafIndex uint64, proof []by
 // is identical to the provided commitment.
 // Parameters:
 // transactionHash - the result of invoking Sha256 on the message packed transaction.
-// transactionProofResponse - the response returned by Algorand when queried using the SDK's GetProof.
-// lightBlockHeaderProofResponse - the response returned by Algorand when queried using the SDK's GetProofForLightBlockHeader.
+// transactionProofResponse - the response returned by an Algorand node when queried using GetTransactionProof.
+// lightBlockHeaderProofResponse - the response returned by an Algorand node when queried using the GetLightBlockHeaderProof.
 // confirmedRound - the round in which the given transaction was confirmed.
 // genesisHash - the hash of the genesis block.
 // seed - the sortition seed of the block associated with the light block header.
