@@ -95,12 +95,13 @@ func getVectorCommitmentPositions(index uint64, depth uint64) ([]NodePosition, e
 }
 
 // computeVectorCommitmentRoot takes a vector commitment leaf, its index, a proof, and a tree depth. it calculates
-// the vector commitment root using the provided data. This is done by each node's parent node using the proof,
+// the vector commitment root using the provided data. This is done by calculating internal nodes using the proof,
 // starting from the leaf, until we reach the root.
+// If hashing is needed,
 // Parameters:
 // leaf - the node we start computing the vector commitment root from.
 // leafIndex - the leaf's index.
-// proof - the proof to use in computing the vector commitment root. It holds hashed sibling nodes for each parent node
+// proof - the proof to use in computing the vector commitment root. It holds hashed sibling nodes for each internal node
 // calculated.
 // treeDepth - the length of the path from the leaf to the root.
 func computeVectorCommitmentRoot(leaf types.Digest, leafIndex uint64, proof []byte, treeDepth uint64) (types.Digest, error) {
@@ -130,21 +131,21 @@ func computeVectorCommitmentRoot(leaf types.Digest, leafIndex uint64, proof []by
 		// siblingHash is the next node to append to our current node, retrieved from the proof.
 		siblingHash := proof[siblingIndexInProof : siblingIndexInProof+nodeHashSize]
 
-		// Vector commitment nodes are of the form Sha256("MA", left child, right child). To calculate the parent node,
+		// Vector commitment nodes are of the form Sha256("MA" || left child || right child). To calculate the internal node,
 		// we have to use the positions array to determine if our current node is the left or right child.
 		// Positions[distanceFromLeaf] is the position of the current node at height distanceFromLeaf.
 		nodeSeparator := []byte(transactionverificationtypes.MerkleArrayNode)
-		var parentNode types.Digest
+		var internalNode types.Digest
 		switch positions[distanceFromLeaf] {
 		case leftChild:
-			parentNode = sha256.Sum256(append(append(nodeSeparator, currentNode[:]...), siblingHash...))
+			internalNode = sha256.Sum256(append(append(nodeSeparator, currentNode[:]...), siblingHash...))
 		case rightChild:
-			parentNode = sha256.Sum256(append(append(nodeSeparator, siblingHash...), currentNode[:]...))
+			internalNode = sha256.Sum256(append(append(nodeSeparator, siblingHash...), currentNode[:]...))
 		default:
 			return types.Digest{}, ErrInvalidPosition
 		}
 
-		currentNode = parentNode
+		currentNode = internalNode
 	}
 
 	return currentNode, nil
