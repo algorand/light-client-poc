@@ -32,8 +32,12 @@ const (
 // stibHash - the Sha256 of the message packed transaction as it's saved in the block.
 func computeTransactionLeaf(txId types.Digest, stibHash types.Digest) types.Digest {
 	leafDomainSeparator := []byte(transactionverificationtypes.TxnMerkleLeaf)
+	leafData := leafDomainSeparator
+	leafData = append(leafData, txId[:]...)
+	leafData = append(leafData, stibHash[:]...)
+
 	// The leaf returned is of the form: Sha256("TL" || Sha256(transaction) || Sha256(transaction in block))
-	return sha256.Sum256(append(append(leafDomainSeparator, txId[:]...), stibHash[:]...))
+	return sha256.Sum256(leafData)
 }
 
 // computeLightBlockHeaderLeaf receives the parameters comprising a light block header, and computes the leaf
@@ -135,17 +139,19 @@ func computeVectorCommitmentRoot(leaf types.Digest, leafIndex uint64, proof []by
 		// we have to use the positions array to determine if our current node is the left or right child.
 		// Positions[distanceFromLeaf] is the position of the current node at height distanceFromLeaf.
 		nodeDomainSeparator := []byte(transactionverificationtypes.MerkleArrayNode)
-		var internalNode types.Digest
+		internalNodeData := nodeDomainSeparator
 		switch positions[distanceFromLeaf] {
 		case leftChild:
-			internalNode = sha256.Sum256(append(append(nodeDomainSeparator, currentNode[:]...), siblingHash...))
+			internalNodeData = append(internalNodeData, currentNode[:]...)
+			internalNodeData = append(internalNodeData, siblingHash[:]...)
 		case rightChild:
-			internalNode = sha256.Sum256(append(append(nodeDomainSeparator, siblingHash...), currentNode[:]...))
+			internalNodeData = append(internalNodeData, siblingHash[:]...)
+			internalNodeData = append(internalNodeData, currentNode[:]...)
 		default:
 			return types.Digest{}, ErrInvalidPosition
 		}
 
-		currentNode = internalNode
+		currentNode = sha256.Sum256(internalNodeData)
 	}
 
 	return currentNode, nil
