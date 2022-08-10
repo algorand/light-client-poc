@@ -60,11 +60,11 @@ func computeLightBlockHeaderLeaf(roundNumber types.Round,
 	return sha256.Sum256(lightBlockheader.ToBeHashed())
 }
 
-// getVectorCommitmentPositions takes the index provided with the proof and translates it to an array of node positions.
-// It does so by treating it as a bitmap of positions, starting from the MSB - this is the key difference
-// between vector commitments and merkle trees. Each position at index i of the result corresponds to our expected node
-// position relative to its sibling when computing the root at height i relative to the leaf.
-// For example, positions[0] is the position of the leaf relative to its sibling.
+// getVectorCommitmentPositions maps a depth and a vector commitment index to the "positions" of the nodes
+// on the leaf-to-root path, with 0/1 denoting left/right (respectively). It does so by expressing the index in binary
+// using exactly depth bits, starting from the most-significant bit.
+// For example, leafDepth=4 and index=5 maps to the array [0,1,0,1] -- indicating that the leaf is a left child,
+// the leaf's parent is a right child, etc.
 // Parameters:
 // index - the leaf's index in the vector commitment tree.
 // depth - the length of the path from the leaf to the root.
