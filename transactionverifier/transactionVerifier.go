@@ -100,8 +100,8 @@ func getVectorCommitmentPositions(index uint64, depth uint64) ([]NodePosition, e
 
 // computeVectorCommitmentRoot takes a vector commitment leaf, its index, a proof, and a tree depth. it calculates
 // the vector commitment root using the provided data. This is done by calculating internal nodes using the proof,
-// starting from the leaf, until we reach the root.
-// If hashing is needed,
+// starting from the leaf, until we reach the root. This function uses sha256 - it cannot be used correctly with leaves
+// and proofs created using a different hash function.
 // Parameters:
 // leaf - the node we start computing the vector commitment root from.
 // leafIndex - the leaf's index.
@@ -171,7 +171,7 @@ func computeVectorCommitmentRoot(leaf types.Digest, leafIndex uint64, proof []by
 // blockIntervalCommitment - the commitment to compare to, provided by the Oracle.
 func VerifyTransaction(transactionHash types.Digest, transactionProofResponse models.ProofResponse,
 	lightBlockHeaderProofResponse models.LightBlockHeaderProof, confirmedRound types.Round, genesisHash types.Digest, seed transactionverificationtypes.Seed, blockIntervalCommitment types.Digest) error {
-	// verifying attested vector commitment roots is currently exclusively supported with sha256 hashing, both for transactions
+	// Verifying attested vector commitment roots is currently exclusively supported with sha256 hashing, both for transactions
 	// and light block headers.
 	if transactionProofResponse.Hashtype != "sha256" {
 		return ErrUnsupportedHashFunction
