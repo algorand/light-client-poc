@@ -6,8 +6,10 @@ import (
 	"github.com/algorand/go-algorand-sdk/types"
 )
 
-// Oracle is in charge of maintaining commitments for previous round intervals and allows, given a round, to retrieve
-// the vector commitment root attesting to that round.
+// Oracle is in charge of ingesting state proofs, in a chain, and saving their block interval attesting
+// vector commitment roots in a window.
+// It then allows, given a round, to retrieve the vector commitment root attesting to the interval to which the round
+// belongs.
 type Oracle struct {
 	// BlockIntervalCommitmentHistory is a sliding window that holds block interval commitments for each interval. Given a round,
 	// it calculates that round's interval and retrieves the block interval commitment for the calculated interval.
