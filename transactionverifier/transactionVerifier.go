@@ -32,7 +32,7 @@ const (
 // stibHash - the Sha256 of the message packed transaction as it's saved in the block.
 func computeTransactionLeaf(txId types.Digest, stibHash types.Digest) types.Digest {
 	leafSeparator := []byte(transactionverificationtypes.TxnMerkleLeaf)
-	// The leaf returned is of the form: Sha256("TL", Sha256(transaction), Sha256(transaction in block))
+	// The leaf returned is of the form: Sha256("TL" || Sha256(transaction) || Sha256(transaction in block))
 	return sha256.Sum256(append(append(leafSeparator, txId[:]...), stibHash[:]...))
 }
 
