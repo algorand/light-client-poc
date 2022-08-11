@@ -28,8 +28,8 @@ const (
 // computeTransactionLeaf receives the transaction ID and the signed transaction in block's hash, and computes
 // the leaf of the vector commitment associated with the transaction.
 // Parameters:
-// txId - the Sha256 hash of the message packed transaction.
-// stibHash - the Sha256 of the message packed transaction as it's saved in the block.
+// txId - the Sha256 hash of the msgpacked transaction.
+// stibHash - the Sha256 of the msgpacked transaction as it's saved in the block.
 func computeTransactionLeaf(txId types.Digest, stibHash types.Digest) types.Digest {
 	leafDomainSeparator := []byte(transactionverificationtypes.TxnMerkleLeaf)
 	leafData := leafDomainSeparator
@@ -162,7 +162,7 @@ func computeVectorCommitmentRoot(leaf types.Digest, leafIndex uint64, proof []by
 // and an expected commitment to compare to. The function verifies that the computed commitment using the given proofs
 // is identical to the provided commitment.
 // Parameters:
-// transactionHash - the result of invoking Sha256 on the message packed transaction.
+// transactionHash - the result of invoking Sha256 on the msgpacked transaction.
 // transactionProofResponse - the response returned by an Algorand node when queried using GetTransactionProof.
 // lightBlockHeaderProofResponse - the response returned by an Algorand node when queried using the GetLightBlockHeaderProof.
 // confirmedRound - the round in which the given transaction was confirmed.

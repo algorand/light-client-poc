@@ -39,14 +39,14 @@ func InitializeOracle(firstAttestedRound uint64, intervalSize uint64, genesisVot
 	}
 }
 
-// AdvanceState receives a message packed state proof, provided by the Algorand node API, and a state proof message that the
+// AdvanceState receives a msgpacked state proof, provided by the Algorand node API, and a state proof message that the
 // state proof attests to. It verifies the message using the proof given and the VotersCommitment and LnProvenWeight
 // from the previous state proof message.
 // If successful, it updates the Oracle's VotersCommitment and LnProvenWeight using their values from the new message,
 // and saves the block header commitment to the history.
 // This method should be called by a relay or some external process that is initiated when new Algorand state proofs are available.
 // Parameters:
-// stateProof - a slice containing the message packed state proof, as returned from the Algorand node API.
+// stateProof - a slice containing the msgpacked state proof, as returned from the Algorand node API.
 // message - the decoded state proof message, unpacked using msgpack.
 func (o *Oracle) AdvanceState(stateProof *transactionverificationtypes.EncodedStateProof, message transactionverificationtypes.Message) error {
 	// verifier is Algorand's implementation of the state proof verifier, exposed by the SDK. It uses the
