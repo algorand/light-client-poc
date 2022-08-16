@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/almog-t/light-client-poc/encoded_assets"
+	"github.com/almog-t/light-client-poc/encodedassets"
 	"github.com/almog-t/light-client-poc/oracle"
 	"github.com/almog-t/light-client-poc/transactionverifier"
 )
@@ -19,7 +19,7 @@ import (
 func main() {
 	// This is the genesis data, required for initializing the oracle. This data can either be queried from the
 	// blockchain itself, or found in the developer's portal.
-	genesisVotersCommitment, genesisVotersLnProvenWeight, err := encoded_assets.GetParsedGenesisData("encoded_assets/genesis/")
+	genesisVotersCommitment, genesisVotersLnProvenWeight, err := encodedassets.GetParsedGenesisData("encodedassets/genesis/")
 	if err != nil {
 		fmt.Printf("Failed to parse genesis assets: %s\n", err)
 		return
@@ -28,7 +28,7 @@ func main() {
 	// This is data required for verifying a transaction. In a real light client, this data should come from a
 	// third party. The third party is responsible for querying Algorand to get most of this data.
 	genesisHash, round, seed, transactionHash, transactionProofResponse, lightBlockHeaderProofResponse, err :=
-		encoded_assets.GetParsedTransactionVerificationData("encoded_assets/transactionverification/")
+		encodedassets.GetParsedTransactionVerificationData("encodedassets/transactionverification/")
 	if err != nil {
 		fmt.Printf("Failed to parse assets needed for transaction verification: %s\n", err)
 		return
@@ -36,7 +36,7 @@ func main() {
 
 	// This is data required for advancing the oracle's state. In a real light client, this data should come from a relayer.
 	stateProofMessage, stateProof, err :=
-		encoded_assets.GetParsedStateProofAdvancmentData("encoded_assets/stateproofverification/")
+		encodedassets.GetParsedStateProofAdvancmentData("encodedassets/stateproofverification/")
 	if err != nil {
 		fmt.Printf("Failed to parse assets needed for oracle state advancement: %s\n", err)
 		return
