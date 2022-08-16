@@ -28,14 +28,14 @@ const (
 // computeTransactionLeaf receives the transaction ID and the signed transaction in block's hash, and computes
 // the leaf of the vector commitment associated with the transaction.
 // Parameters:
-// txId - the Sha256 hash of the canonical msgpack encoded transaction.
+// transactionHash - the Sha256 hash of the canonical msgpack encoded transaction.
 // stibHash - the Sha256 of the canonical msgpack encoded transaction as it's saved in the block.
-func computeTransactionLeaf(txId types.Digest, stibHash types.Digest) types.Digest {
+func computeTransactionLeaf(transactionHash types.Digest, stibHash types.Digest) types.Digest {
 	leafDomainSeparator := []byte(transactionverificationtypes.TxnMerkleLeaf)
 
 	var leafData []byte
 	leafData = append(leafData, leafDomainSeparator...)
-	leafData = append(leafData, txId[:]...)
+	leafData = append(leafData, transactionHash[:]...)
 	leafData = append(leafData, stibHash[:]...)
 
 	// The leaf returned is of the form: Sha256("TL" || Sha256(transaction) || Sha256(transaction in block))
