@@ -9,7 +9,7 @@ import (
 
 // A light client is composed of two modules:
 // 1. An oracle, in charge of maintaining Algorand's state as verified with state proofs. For more details, see oracle.go.
-// 2. A transaction verifier, in charge of verifying transaction occurrence by interfacing with the oracle. For more
+// 2. A transaction verifier, in charge of verifying Algorand transaction occurrence by interfacing with the oracle. For more
 // details, see transactionVerifier.go.
 // This main function aims to demonstrate the interface between these two modules. In an actual
 // light client, they can be entirely separate processes/smart contracts.
@@ -28,7 +28,7 @@ func main() {
 	// This is data required for verifying a transaction. In a real light client, this data should come from a
 	// third party. The third party is responsible for querying Algorand to get most of this data.
 	genesisHash, round, seed, transactionHash, transactionProofResponse, lightBlockHeaderProofResponse, err :=
-		encoded_assets.GetParsedTransactionVerificationData("encoded_assets/transaction_verification/")
+		encoded_assets.GetParsedTransactionVerificationData("encoded_assets/transactionverification/")
 	if err != nil {
 		fmt.Printf("Failed to parse assets needed for transaction verification: %s\n", err)
 		return
@@ -36,7 +36,7 @@ func main() {
 
 	// This is data required for advancing the oracle's state. In a real light client, this data should come from a relayer.
 	stateProofMessage, stateProof, err :=
-		encoded_assets.GetParsedStateProofAdvancmentData("encoded_assets/state_proof_verification/")
+		encoded_assets.GetParsedStateProofAdvancmentData("encoded_assets/stateproofverification/")
 	if err != nil {
 		fmt.Printf("Failed to parse assets needed for oracle state advancement: %s\n", err)
 		return
@@ -58,15 +58,15 @@ func main() {
 		return
 	}
 
-	// After advancing the oracle's state, we retrieve the commitment for the given transaction's round from the oracle.
+	// After advancing the oracle's state, we retrieve the block interval commitment containing the given transaction's round from the oracle.
 	desiredTransactionCommitment, err := oracleInstance.GetStateProofCommitment(round)
 	if err != nil {
 		fmt.Printf("Failed to retrieve commitment interval for round %d: %s\n", round, err)
 		return
 	}
 
-	// We then verify the transaction's occurrence using the data provided for transaction verification, along with the
-	// commitment retrieved for the transaction.
+	// We then verify the transaction's occurrence using the data provided for transaction verification,
+	// along with the block interval commitment this transaction belongs to.
 	err = transactionverifier.VerifyTransaction(transactionHash, transactionProofResponse,
 		lightBlockHeaderProofResponse, round, genesisHash, seed, desiredTransactionCommitment)
 

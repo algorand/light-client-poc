@@ -6,13 +6,13 @@ import (
 	"github.com/algorand/go-algorand-sdk/types"
 )
 
-// Oracle is in charge of ingesting state proofs, in a chain, and saving their block interval attesting
-// vector commitment roots in a window.
+// Oracle is responsible for ingesting State Proofs in chronological order and saving their block interval commitments
+// to form a window of verified Algorand history.
 // It then allows, given a round, to retrieve the vector commitment root attesting to the interval to which the round
 // belongs.
 type Oracle struct {
-	// BlockIntervalCommitmentHistory is a sliding window that holds block interval commitments for each interval. Given a round,
-	// it calculates that round's interval and retrieves the block interval commitment for the calculated interval.
+	// BlockIntervalCommitmentHistory is a sliding window of verified block interval commitments. Given a round,
+	// it returns the block interval commitment that contains the specified block.
 	BlockIntervalCommitmentHistory *CommitmentHistory
 	// VotersCommitment is the vector commitment root of the top N accounts to sign the next StateProof.
 	VotersCommitment transactionverificationtypes.GenericDigest

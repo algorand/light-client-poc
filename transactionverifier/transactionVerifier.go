@@ -101,7 +101,7 @@ func getVectorCommitmentPositions(index uint64, depth uint64) ([]NodePosition, e
 }
 
 // computeVectorCommitmentRoot takes a vector commitment leaf, its index, a proof, and a tree depth. it calculates
-// the vector commitment root using the provided data. This is done by calculating internal nodes using the proof,
+// the vector commitment root using the provided data. This is done by computing internal nodes using the proof,
 // starting from the leaf, until we reach the root. This function uses sha256 - it cannot be used correctly with leaves
 // and proofs created using a different hash function.
 // Parameters:
