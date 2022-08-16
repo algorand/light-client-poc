@@ -17,7 +17,8 @@ import (
 // transaction occurrence queries from third parties. For the purposes of this PoC, they're two separate go packages, and
 // both the relayer and other third parties have been replaced with example committed data.
 func main() {
-	// This is the genesis data, required for initializing the oracle.
+	// This is the genesis data, required for initializing the oracle. This data can either be queried from the
+	// blockchain itself, or found in the developer's portal.
 	genesisVotersCommitment, genesisVotersLnProvenWeight, err := encoded_assets.GetParsedGenesisData("encoded_assets/genesis/")
 	if err != nil {
 		fmt.Printf("Failed to parse genesis assets: %s\n", err)
