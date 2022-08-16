@@ -1,4 +1,4 @@
-package encoded_assets
+package encodedassets
 
 import (
 	"encoding/json"
