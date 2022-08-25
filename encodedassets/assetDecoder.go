@@ -22,42 +22,42 @@ func decodeFromFile(encodedPath string, target interface{}) error {
 	return err
 }
 
-func GetParsedtypesData(typesDataPath string) (types.Digest, types.Round, types.Seed, types.Digest, models.ProofResponse,
+func GetParsedtypesData(typesDataPath string) (types.Digest, types.Round, types.Seed, types.Digest, models.TransactionProofResponse,
 	models.LightBlockHeaderProof, error) {
 	var genesisHash types.Digest
 	err := decodeFromFile(filepath.Join(typesDataPath, "genesis_hash.txt"), &genesisHash)
 	if err != nil {
-		return types.Digest{}, 0, types.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
+		return types.Digest{}, 0, types.Seed{}, types.Digest{}, models.TransactionProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
 	var round types.Round
 	err = decodeFromFile(filepath.Join(typesDataPath, "round.txt"), &round)
 	if err != nil {
-		return types.Digest{}, 0, types.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
+		return types.Digest{}, 0, types.Seed{}, types.Digest{}, models.TransactionProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
 	var seed types.Seed
 	err = decodeFromFile(filepath.Join(typesDataPath, "seed.txt"), &seed)
 	if err != nil {
-		return types.Digest{}, 0, types.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
+		return types.Digest{}, 0, types.Seed{}, types.Digest{}, models.TransactionProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
 	var transactionId types.Digest
 	err = decodeFromFile(filepath.Join(typesDataPath, "transaction_id.txt"), &transactionId)
 	if err != nil {
-		return types.Digest{}, 0, types.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
+		return types.Digest{}, 0, types.Seed{}, types.Digest{}, models.TransactionProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
-	var transactionProofResponse models.ProofResponse
+	var transactionProofResponse models.TransactionProofResponse
 	err = decodeFromFile(filepath.Join(typesDataPath, "transaction_proof_response.json"), &transactionProofResponse)
 	if err != nil {
-		return types.Digest{}, 0, types.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
+		return types.Digest{}, 0, types.Seed{}, types.Digest{}, models.TransactionProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
 	var lightBlockHeaderProof models.LightBlockHeaderProof
 	err = decodeFromFile(filepath.Join(typesDataPath, "light_block_header_proof_response.json"), &lightBlockHeaderProof)
 	if err != nil {
-		return types.Digest{}, 0, types.Seed{}, types.Digest{}, models.ProofResponse{}, models.LightBlockHeaderProof{}, err
+		return types.Digest{}, 0, types.Seed{}, types.Digest{}, models.TransactionProofResponse{}, models.LightBlockHeaderProof{}, err
 	}
 
 	return genesisHash, round, seed, transactionId, transactionProofResponse,

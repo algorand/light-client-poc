@@ -172,7 +172,7 @@ func computeVectorCommitmentRoot(leaf types.Digest, leafIndex uint64, proof []by
 // genesisHash - the hash of the genesis block.
 // seed - the sortition seed of the block associated with the light block header.
 // blockIntervalCommitment - the commitment to compare to, provided by the Oracle.
-func VerifyTransaction(transactionHash types.Digest, transactionProofResponse models.ProofResponse,
+func VerifyTransaction(transactionHash types.Digest, transactionProofResponse models.TransactionProofResponse,
 	lightBlockHeaderProofResponse models.LightBlockHeaderProof, confirmedRound types.Round, genesisHash types.Digest, seed types.Seed, blockIntervalCommitment types.Digest) error {
 	// Verifying attested vector commitment roots is currently exclusively supported with sha256 hashing, both for transactions
 	// and light block headers.
