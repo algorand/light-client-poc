@@ -2,7 +2,7 @@ package oracle
 
 import (
 	"errors"
-	"github.com/algorand/go-stateproof-verification/types"
+	"github.com/algorand/go-algorand-sdk/types"
 )
 
 var (

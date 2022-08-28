@@ -7,7 +7,12 @@ import (
 
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
 
-	"github.com/algorand/go-stateproof-verification/types"
+	"github.com/algorand/go-algorand-sdk/types"
+)
+
+const (
+	TxnMerkleLeaf   types.HashID = "TL"
+	MerkleArrayNode types.HashID = "MA"
 )
 
 var (
@@ -32,7 +37,7 @@ const (
 // transactionHash - the Sha256 hash of the canonical msgpack encoded transaction.
 // stibHash - the Sha256 of the canonical msgpack encoded transaction as it's saved in the block.
 func computeTransactionLeaf(transactionHash types.Digest, stibHash types.Digest) types.Digest {
-	leafDomainSeparator := []byte(types.TxnMerkleLeaf)
+	leafDomainSeparator := []byte(TxnMerkleLeaf)
 
 	var leafData []byte
 	leafData = append(leafData, leafDomainSeparator...)
@@ -141,7 +146,7 @@ func computeVectorCommitmentRoot(leaf types.Digest, leafIndex uint64, proof []by
 		// Vector commitment nodes are of the form Sha256("MA" || left child || right child). To calculate the internal node,
 		// we have to use the positions array to determine if our current node is the left or right child.
 		// Positions[distanceFromLeaf] is the position of the current node at height distanceFromLeaf.
-		nodeDomainSeparator := []byte(types.MerkleArrayNode)
+		nodeDomainSeparator := []byte(MerkleArrayNode)
 		internalNodeData := nodeDomainSeparator
 		switch positions[distanceFromLeaf] {
 		case leftChild:

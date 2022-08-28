@@ -7,7 +7,7 @@ import (
 
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
 
-	"github.com/algorand/go-stateproof-verification/types"
+	"github.com/algorand/go-algorand-sdk/types"
 )
 
 // These functions take the encoded assets, committed as examples, and parse them.

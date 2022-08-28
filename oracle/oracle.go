@@ -1,8 +1,8 @@
 package oracle
 
 import (
-	"github.com/algorand/go-stateproof-verification/stateproofverification"
-	"github.com/algorand/go-stateproof-verification/types"
+	"github.com/algorand/go-algorand-sdk/stateproofs"
+	"github.com/algorand/go-algorand-sdk/types"
 )
 
 // Oracle is responsible for ingesting State Proofs in chronological order and saving their block interval commitments
@@ -52,7 +52,7 @@ func (o *Oracle) AdvanceState(stateProof *types.EncodedStateProof, message types
 	// previous proven VotersCommitment and LnProvenWeight.
 	verifier := stateproofverification.InitializeVerifier(o.VotersCommitment, o.LnProvenWeight)
 	// The newly formed verifier verifies the given message using the state proof.
-	err := verifier.VerifyStateProofMessage(stateProof, message)
+	err := verifier.VerifyStateProofMessage(stateProof, &message)
 	if err != nil {
 		// If the verification failed, for whatever reason, we return the error returned.
 		return err
