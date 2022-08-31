@@ -39,7 +39,7 @@ const (
 // transactionHash - the Sha256 hash of the canonical msgpack encoded transaction.
 // stibHash - the Sha256 of the canonical msgpack encoded transaction as it's saved in the block.
 func computeTransactionLeaf(transactionHash types.Digest, stibHash types.Digest) types.Digest {
-	var leafData []byte
+	leafData := make([]byte, 0, len(TxnMerkleLeaf)+len(transactionHash)+len(stibHash))
 	leafData = append(leafData, TxnMerkleLeaf...)
 	leafData = append(leafData, transactionHash[:]...)
 	leafData = append(leafData, stibHash[:]...)
@@ -64,8 +64,9 @@ func computeLightBlockHeaderLeaf(roundNumber types.Round,
 		Seed:                seed,
 	}
 
-	var lightBlockHeaderData []byte
+	msgPackedLightBlockHeader := msgpack.Encode(lightBlockHeader)
 
+	lightBlockHeaderData := make([]byte, 0, len(BlockHeader256)+len(msgPackedLightBlockHeader))
 	lightBlockHeaderData = append(lightBlockHeaderData, BlockHeader256...)
 	lightBlockHeaderData = append(lightBlockHeaderData, msgpack.Encode(lightBlockHeader)...)
 
