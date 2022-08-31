@@ -52,7 +52,7 @@ func (o *Oracle) AdvanceState(stateProof *types.EncodedStateProof, message types
 	// previous proven VotersCommitment and LnProvenWeight.
 	verifier := stateproofverification.InitializeVerifier(o.VotersCommitment, o.LnProvenWeight)
 	// The newly formed verifier verifies the given message using the state proof.
-	err := verifier.VerifyStateProofMessage(stateProof, &message)
+	err := verifier.Verify(stateProof, &message)
 	if err != nil {
 		// If the verification failed, for whatever reason, we return the error returned.
 		return err
