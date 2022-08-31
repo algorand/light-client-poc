@@ -6,8 +6,11 @@ import (
 	"path/filepath"
 
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
-
+	"github.com/algorand/go-algorand-sdk/encoding/msgpack"
 	"github.com/algorand/go-algorand-sdk/types"
+
+	"github.com/algorand/go-stateproof-verification/stateproof"
+	"github.com/algorand/go-stateproof-verification/stateproofcrypto"
 )
 
 // These functions take the encoded assets, committed as examples, and parse them.
@@ -64,32 +67,38 @@ func GetParsedtypesData(typesDataPath string) (types.Digest, types.Round, types.
 		lightBlockHeaderProof, nil
 }
 
-func GetParsedGenesisData(genesisDataPath string) (types.GenericDigest, uint64, error) {
-	genesisVotersCommitment := types.GenericDigest{}
+func GetParsedGenesisData(genesisDataPath string) (stateproofcrypto.GenericDigest, uint64, error) {
+	genesisVotersCommitment := stateproofcrypto.GenericDigest{}
 	err := decodeFromFile(filepath.Join(genesisDataPath, "genesis_voters_commitment.txt"), &genesisVotersCommitment)
 	if err != nil {
-		return types.GenericDigest{}, 0, err
+		return stateproofcrypto.GenericDigest{}, 0, err
 	}
 
 	genesisVotersLnProvenWeight := uint64(0)
 	err = decodeFromFile(filepath.Join(genesisDataPath, "genesis_voters_ln_proven_weight.txt"), &genesisVotersLnProvenWeight)
 	if err != nil {
-		return types.GenericDigest{}, 0, err
+		return stateproofcrypto.GenericDigest{}, 0, err
 	}
 
 	return genesisVotersCommitment, genesisVotersLnProvenWeight, nil
 }
 
 func GetParsedStateProofAdvancmentData(stateProofVerificationDataPath string) (types.Message,
-	*types.EncodedStateProof, error) {
+	*stateproof.StateProof, error) {
 	stateProofMessage := types.Message{}
 	err := decodeFromFile(filepath.Join(stateProofVerificationDataPath, "state_proof_message.json"), &stateProofMessage)
 	if err != nil {
 		return types.Message{}, nil, err
 	}
 
-	var stateProof types.EncodedStateProof
-	err = decodeFromFile(filepath.Join(stateProofVerificationDataPath, "state_proof.txt"), &stateProof)
+	var msgPackedStateProof []byte
+	err = decodeFromFile(filepath.Join(stateProofVerificationDataPath, "state_proof.txt"), &msgPackedStateProof)
+	if err != nil {
+		return types.Message{}, nil, err
+	}
+
+	var stateProof stateproof.StateProof
+	err = msgpack.Decode(msgPackedStateProof, &stateProof)
 	if err != nil {
 		return types.Message{}, nil, err
 	}
