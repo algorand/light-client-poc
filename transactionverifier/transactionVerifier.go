@@ -6,13 +6,15 @@ import (
 	"errors"
 
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
+	"github.com/algorand/go-algorand-sdk/encoding/msgpack"
 
 	"github.com/algorand/go-algorand-sdk/types"
 )
 
-const (
-	TxnMerkleLeaf   types.HashID = "TL"
-	MerkleArrayNode types.HashID = "MA"
+var (
+	TxnMerkleLeaf   = []byte("TL")
+	MerkleArrayNode = []byte("MA")
+	BlockHeader256  = []byte("B256")
 )
 
 var (
@@ -37,10 +39,8 @@ const (
 // transactionHash - the Sha256 hash of the canonical msgpack encoded transaction.
 // stibHash - the Sha256 of the canonical msgpack encoded transaction as it's saved in the block.
 func computeTransactionLeaf(transactionHash types.Digest, stibHash types.Digest) types.Digest {
-	leafDomainSeparator := []byte(TxnMerkleLeaf)
-
 	var leafData []byte
-	leafData = append(leafData, leafDomainSeparator...)
+	leafData = append(leafData, TxnMerkleLeaf...)
 	leafData = append(leafData, transactionHash[:]...)
 	leafData = append(leafData, stibHash[:]...)
 
@@ -57,15 +57,20 @@ func computeTransactionLeaf(transactionHash types.Digest, stibHash types.Digest)
 // seed - the sortition seed of the block associated with the light block header.
 func computeLightBlockHeaderLeaf(roundNumber types.Round,
 	transactionCommitment types.Digest, genesisHash types.Digest, seed types.Seed) types.Digest {
-	lightBlockheader := types.LightBlockHeader{
+	lightBlockHeader := types.LightBlockHeader{
 		RoundNumber:         roundNumber,
 		GenesisHash:         genesisHash,
 		Sha256TxnCommitment: transactionCommitment,
 		Seed:                seed,
 	}
 
-	// The leaf returned is of the form Sha256(lightBlockHeader)
-	return sha256.Sum256(lightBlockheader.ToBeHashed())
+	var lightBlockHeaderData []byte
+
+	lightBlockHeaderData = append(lightBlockHeaderData, BlockHeader256...)
+	lightBlockHeaderData = append(lightBlockHeaderData, msgpack.Encode(lightBlockHeader)...)
+
+	// The leaf returned is of the form Sha256("B256" || msgpack(lightBlockHeader))
+	return sha256.Sum256(lightBlockHeaderData)
 }
 
 // getVectorCommitmentPositions maps a depth and a vector commitment index to the "positions" of the nodes
@@ -146,7 +151,7 @@ func computeVectorCommitmentRoot(leaf types.Digest, leafIndex uint64, proof []by
 		// Vector commitment nodes are of the form Sha256("MA" || left child || right child). To calculate the internal node,
 		// we have to use the positions array to determine if our current node is the left or right child.
 		// Positions[distanceFromLeaf] is the position of the current node at height distanceFromLeaf.
-		nodeDomainSeparator := []byte(MerkleArrayNode)
+		nodeDomainSeparator := MerkleArrayNode
 		internalNodeData := nodeDomainSeparator
 		switch positions[distanceFromLeaf] {
 		case leftChild:
