@@ -51,7 +51,7 @@ func InitializeOracle(firstAttestedRound uint64, intervalSize uint64, genesisVot
 // message - the message to which the state proof attests.
 func (o *Oracle) AdvanceState(stateProof *stateproof.StateProof, message types.Message) error {
 	// verifier is Algorand's implementation of the state proof verifier, exposed by the state proof verification library.
-	// It uses the previous proven VotersCommitment and LnProvenWeight, and the strengthTarget consensus parameter.
+	// It uses the previous proven VotersCommitment and LnProvenWeight.
 	verifier := stateproof.MkVerifierWithLnProvenWeight(o.VotersCommitment, o.LnProvenWeight)
 
 	// We hash the state proof message using the Algorand SDK. the resulting hash is of the form
