@@ -7,9 +7,6 @@ import (
 	"github.com/algorand/go-stateproof-verification/stateproofcrypto"
 )
 
-// strengthTarget is an Algorand consensus parameter.
-const strengthTarget = 256
-
 // Oracle is responsible for ingesting State Proofs in chronological order and saving their block interval commitments
 // to form a window of verified Algorand history.
 // It then allows, given a round, to retrieve the vector commitment root attesting to the interval to which the round
@@ -55,7 +52,7 @@ func InitializeOracle(firstAttestedRound uint64, intervalSize uint64, genesisVot
 func (o *Oracle) AdvanceState(stateProof *stateproof.StateProof, message types.Message) error {
 	// verifier is Algorand's implementation of the state proof verifier, exposed by the state proof verification library.
 	// It uses the previous proven VotersCommitment and LnProvenWeight, and the strengthTarget consensus parameter.
-	verifier := stateproof.MkVerifierWithLnProvenWeight(o.VotersCommitment, o.LnProvenWeight, strengthTarget)
+	verifier := stateproof.MkVerifierWithLnProvenWeight(o.VotersCommitment, o.LnProvenWeight)
 
 	// We hash the state proof message using the Algorand SDK. the resulting hash is of the form
 	// sha256("spm" || msgpack(stateProofMessage)).
