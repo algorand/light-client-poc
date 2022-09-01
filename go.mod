@@ -3,7 +3,7 @@ module github.com/almog-t/light-client-poc
 go 1.17
 
 require (
-	github.com/algorand/go-algorand-sdk v1.14.1-0.20220901105940-fa3a20894ee6
+	github.com/algorand/go-algorand-sdk v1.14.1-0.20220901113244-e97b2d10de7d
 	github.com/algorand/go-stateproof-verification v0.0.0-20220901111510-6d875c3e7c43
 )
 

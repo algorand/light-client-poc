@@ -1,8 +1,8 @@
 github.com/algorand/avm-abi v0.1.0/go.mod h1:+CgwM46dithy850bpTeHh9MC99zpn2Snirb3QTl2O/g=
 github.com/algorand/falcon v0.0.0-20220727072124-02a2a64c4414 h1:nwYN+GQ7Z5OOfZwqBO1ma7DSlP7S1YrKWICOyjkwqrc=
 github.com/algorand/falcon v0.0.0-20220727072124-02a2a64c4414/go.mod h1:OkQyHlGvS0kLNcIWbC21/uQcnbfwSOQm+wiqWwBG9pQ=
-github.com/algorand/go-algorand-sdk v1.14.1-0.20220901105940-fa3a20894ee6 h1:RR4fPJqHRAJ96QFXGB/Bff7hXqnpbQL6TzexrO4aXDA=
-github.com/algorand/go-algorand-sdk v1.14.1-0.20220901105940-fa3a20894ee6/go.mod h1:7i2peZBcE48kfoxNZnLA+mklKh812jBKvQ+t4bn0KBQ=
+github.com/algorand/go-algorand-sdk v1.14.1-0.20220901113244-e97b2d10de7d h1:gr0t4j1mizinsHZFOHMUTx84AoVYCFSd4K7+3hhx5Jw=
+github.com/algorand/go-algorand-sdk v1.14.1-0.20220901113244-e97b2d10de7d/go.mod h1:7i2peZBcE48kfoxNZnLA+mklKh812jBKvQ+t4bn0KBQ=
 github.com/algorand/go-codec v1.1.8 h1:XDSreeeZY8gMst6Edz4RBkl08/DGMJOeHYkoXL2B7wI=
 github.com/algorand/go-codec v1.1.8/go.mod h1:XhzVs6VVyWMLu6cApb9/192gBjGRVGm5cX5j203Heg4=
 github.com/algorand/go-codec/codec v1.1.8 h1:lsFuhcOH2LiEhpBH3BVUUkdevVmwCRyvb7FCAAPeY6U=

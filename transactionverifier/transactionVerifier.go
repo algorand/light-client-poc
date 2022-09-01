@@ -63,7 +63,7 @@ func computeLightBlockHeaderLeaf(roundNumber types.Round,
 	}
 
 	// The leaf returned is of the form Sha256("B256" || msgpack(lightBlockHeader))
-	return crypto.ComputeLightBlockHeaderVectorCommitmentLeaf(lightBlockHeader)
+	return crypto.HashLightBlockHeader(lightBlockHeader)
 }
 
 // getVectorCommitmentPositions maps a depth and a vector commitment index to the "positions" of the nodes
