@@ -57,7 +57,8 @@ func (o *Oracle) AdvanceState(stateProof *stateproof.StateProof, message types.M
 	// It uses the previous proven VotersCommitment and LnProvenWeight, and the strengthTarget consensus parameter.
 	verifier := stateproof.MkVerifierWithLnProvenWeight(o.VotersCommitment, o.LnProvenWeight, strengthTarget)
 
-	// We hash the message using Algorand SDK functionality for verification.
+	// We hash the state proof message using the Algorand SDK. the resulting hash is of the form
+	// sha256("spm" || msgpack(stateProofMessage)).
 	messageHash := stateproofcrypto.MessageHash(crypto.HashStateProofMessage(&message))
 
 	// The newly formed verifier verifies the given message using the state proof.
