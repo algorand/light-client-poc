@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"errors"
+	"github.com/algorand/go-algorand-sdk/crypto"
 
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
-	"github.com/algorand/go-algorand-sdk/encoding/msgpack"
-
 	"github.com/algorand/go-algorand-sdk/types"
 )
 
@@ -64,14 +63,8 @@ func computeLightBlockHeaderLeaf(roundNumber types.Round,
 		Seed:                seed,
 	}
 
-	msgPackedLightBlockHeader := msgpack.Encode(lightBlockHeader)
-
-	lightBlockHeaderData := make([]byte, 0, len(BlockHeader256)+len(msgPackedLightBlockHeader))
-	lightBlockHeaderData = append(lightBlockHeaderData, BlockHeader256...)
-	lightBlockHeaderData = append(lightBlockHeaderData, msgpack.Encode(lightBlockHeader)...)
-
 	// The leaf returned is of the form Sha256("B256" || msgpack(lightBlockHeader))
-	return sha256.Sum256(lightBlockHeaderData)
+	return crypto.ComputeLightBlockHeaderVectorCommitmentLeaf(lightBlockHeader)
 }
 
 // getVectorCommitmentPositions maps a depth and a vector commitment index to the "positions" of the nodes
