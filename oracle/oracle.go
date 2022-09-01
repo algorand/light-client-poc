@@ -3,6 +3,7 @@ package oracle
 import (
 	"github.com/algorand/go-algorand-sdk/crypto"
 	"github.com/algorand/go-algorand-sdk/types"
+	
 	"github.com/algorand/go-stateproof-verification/stateproof"
 	"github.com/algorand/go-stateproof-verification/stateproofcrypto"
 )
