@@ -25,7 +25,7 @@ func decodeFromFile(encodedPath string, target interface{}) error {
 	return err
 }
 
-func GetParsedtypesData(typesDataPath string) (types.Digest, types.Round, types.Seed, types.Digest, models.TransactionProofResponse,
+func GetParsedTypesData(typesDataPath string) (types.Digest, types.Round, types.Seed, types.Digest, models.TransactionProofResponse,
 	models.LightBlockHeaderProof, error) {
 	var genesisHash types.Digest
 	err := decodeFromFile(filepath.Join(typesDataPath, "genesis_hash.txt"), &genesisHash)
