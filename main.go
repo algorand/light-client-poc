@@ -28,7 +28,7 @@ func main() {
 	// This is data required for verifying a transaction. In a real light client, this data should come from a
 	// third party. The third party is responsible for querying Algorand to get most of this data.
 	genesisHash, round, seed, transactionHash, transactionProofResponse, lightBlockHeaderProofResponse, err :=
-		encodedassets.GetParsedTransactionVerificationData("encodedassets/transactionverification/")
+		encodedassets.GetParsedTypesData("encodedassets/transactionverification/")
 	if err != nil {
 		fmt.Printf("Failed to parse assets needed for transaction verification: %s\n", err)
 		return

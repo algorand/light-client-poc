@@ -1,9 +1,11 @@
 package oracle
 
 import (
-	"github.com/algorand/go-algorand-sdk/stateproofs/stateproofverification"
-	"github.com/algorand/go-algorand-sdk/stateproofs/transactionverificationtypes"
+	"github.com/algorand/go-algorand-sdk/crypto"
 	"github.com/algorand/go-algorand-sdk/types"
+
+	"github.com/algorand/go-stateproof-verification/stateproof"
+	"github.com/algorand/go-stateproof-verification/stateproofcrypto"
 )
 
 // Oracle is responsible for ingesting State Proofs in chronological order and saving their block interval commitments
@@ -15,7 +17,7 @@ type Oracle struct {
 	// it returns the block interval commitment that contains the specified block.
 	BlockIntervalCommitmentHistory *CommitmentHistory
 	// VotersCommitment is the vector commitment root of the top N accounts to sign the next StateProof.
-	VotersCommitment transactionverificationtypes.GenericDigest
+	VotersCommitment stateproofcrypto.GenericDigest
 	// LnProvenWeight is an integer value representing the natural log of the proven weight with 16 bits of precision.
 	// This value would be used to verify the next state proof.
 	LnProvenWeight uint64
@@ -28,7 +30,7 @@ type Oracle struct {
 // genesisVotersCommitment - the initial genesisVotersCommitment commitment. Real values can be found in the Algorand developer portal.
 // genesisLnProvenWeight - the initial LnProvenWeight. Real values can be found in the Algorand developer portal.
 // capacity - the maximum number of commitments to hold before discarding the earliest commitment.
-func InitializeOracle(firstAttestedRound uint64, intervalSize uint64, genesisVotersCommitment transactionverificationtypes.GenericDigest,
+func InitializeOracle(firstAttestedRound uint64, intervalSize uint64, genesisVotersCommitment stateproofcrypto.GenericDigest,
 	genesisLnProvenWeight uint64, capacity uint64) *Oracle {
 	return &Oracle{
 		// The BlockIntervalCommitmentHistory is initialized using the first attested round,
@@ -46,14 +48,19 @@ func InitializeOracle(firstAttestedRound uint64, intervalSize uint64, genesisVot
 // and saves the block header commitment to the history.
 // This method should be called by a relay or some external process that is initiated when new Algorand state proofs are available.
 // Parameters:
-// stateProof - a slice containing the msgpacked state proof, as returned from the Algorand node API.
-// message - the decoded state proof message, unpacked using msgpack.
-func (o *Oracle) AdvanceState(stateProof *transactionverificationtypes.EncodedStateProof, message transactionverificationtypes.Message) error {
-	// verifier is Algorand's implementation of the state proof verifier, exposed by the SDK. It uses the
-	// previous proven VotersCommitment and LnProvenWeight.
-	verifier := stateproofverification.InitializeVerifier(o.VotersCommitment, o.LnProvenWeight)
+// stateProof - the decoded state proof, retrieved using the Algorand SDK.
+// message - the message to which the state proof attests.
+func (o *Oracle) AdvanceState(stateProof *stateproof.StateProof, message types.Message) error {
+	// verifier is Algorand's implementation of the state proof verifier, exposed by the state proof verification library.
+	// It uses the previous proven VotersCommitment and LnProvenWeight.
+	verifier := stateproof.MkVerifierWithLnProvenWeight(o.VotersCommitment, o.LnProvenWeight)
+
+	// We hash the state proof message using the Algorand SDK. The resulting hash is of the form
+	// sha256("spm" || msgpack(stateProofMessage)).
+	messageHash := stateproofcrypto.MessageHash(crypto.HashStateProofMessage(&message))
+
 	// The newly formed verifier verifies the given message using the state proof.
-	err := verifier.VerifyStateProofMessage(stateProof, message)
+	err := verifier.Verify(message.LastAttestedRound, messageHash, stateProof)
 	if err != nil {
 		// If the verification failed, for whatever reason, we return the error returned.
 		return err
