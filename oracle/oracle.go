@@ -50,8 +50,8 @@ func InitializeOracle(firstAttestedRound uint64, intervalSize uint64, genesisVot
 // and saves the block header commitment to the history.
 // This method should be called by a relay or some external process that is initiated when new Algorand state proofs are available.
 // Parameters:
-// stateProof - a slice containing the msgpacked state proof, as returned from the Algorand node API.
-// message - the decoded state proof message, unpacked using msgpack.
+// stateProof - the decoded state proof, retrieved using the Algorand SDK.
+// message - the message to which the state proof attests.
 func (o *Oracle) AdvanceState(stateProof *stateproof.StateProof, message types.Message) error {
 	// verifier is Algorand's implementation of the state proof verifier, exposed by the state proof verification library.
 	// It uses the previous proven VotersCommitment and LnProvenWeight, and the strengthTarget consensus parameter.
