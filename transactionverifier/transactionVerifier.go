@@ -4,16 +4,15 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"errors"
-	"github.com/algorand/go-algorand-sdk/crypto"
-
+	
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
+	"github.com/algorand/go-algorand-sdk/crypto"
 	"github.com/algorand/go-algorand-sdk/types"
 )
 
 var (
 	TxnMerkleLeaf   = []byte("TL")
 	MerkleArrayNode = []byte("MA")
-	BlockHeader256  = []byte("B256")
 )
 
 var (
